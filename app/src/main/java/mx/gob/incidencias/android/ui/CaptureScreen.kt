@@ -23,6 +23,7 @@ import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -198,16 +199,34 @@ private fun CaptureCodeStep(
     var loading by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     var results by remember { mutableStateOf<List<IncidenceCode>>(emptyList()) }
+    var category by remember { mutableStateOf("Todos") }
 
-    fun search() {
+    fun loadAllCodes() {
         scope.launch {
             loading = true
             error = null
-            runCatching { api.incidenceCodes(query.ifBlank { null }).bodyOrThrow().data }
-                .onSuccess { results = it }
+            runCatching { api.incidenceCodes(null).bodyOrThrow().data }
+                .onSuccess { results = it.sortedBy { code -> code.code.padStart(4, '0') } }
                 .onFailure { error = it.userMessage() }
             loading = false
         }
+    }
+
+    LaunchedEffect(Unit) { loadAllCodes() }
+
+    val filteredCodes = results.filter { code ->
+        val text = query.trim()
+        val matchesText = text.isBlank() ||
+            code.code.contains(text, ignoreCase = true) ||
+            code.description.contains(text, ignoreCase = true)
+        val matchesCategory = when (category) {
+            "Vacaciones" -> code.requiresPeriod() || code.isVacacional
+            "Incapacidad" -> code.requiresIncapacityDetails()
+            "Rango" -> code.requiresDateRange()
+            "TXT" -> code.requiresTxtFields()
+            else -> true
+        }
+        matchesText && matchesCategory
     }
 
     LazyColumn(verticalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -215,27 +234,38 @@ private fun CaptureCodeStep(
         item {
             HeroHeader(
                 title = "Código de incidencia",
-                subtitle = employee?.fullName ?: "Selecciona el tipo de incidencia",
+                subtitle = employee?.fullName ?: "Elige el tipo de incidencia",
                 icon = "🏷️"
             )
         }
         item { CaptureStepper(current = 2) }
         item { employee?.let { SelectedEmployeeSummary(it) } }
         item {
-            CaptureSectionCard(title = "Catálogo de códigos", subtitle = "Busca por código o descripción") {
-                SearchBox(
+            CaptureSectionCard(
+                title = "Selecciona un código",
+                subtitle = "Ya no necesitas capturar el código: toca una opción de la lista"
+            ) {
+                OutlinedTextField(
                     value = query,
                     onValueChange = { query = it },
-                    label = "Código o descripción",
-                    buttonText = "Buscar código",
-                    loading = loading,
-                    onSearch = ::search
+                    label = { Text("Filtrar por código o descripción") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
                 )
+                Spacer(Modifier.height(8.dp))
+                CodeCategorySelector(selected = category, onSelected = { category = it })
+                Spacer(Modifier.height(8.dp))
+                Button(onClick = ::loadAllCodes, enabled = !loading, modifier = Modifier.fillMaxWidth()) {
+                    Text("Actualizar catálogo")
+                }
             }
         }
         error?.let { item { ErrorCard(it) } }
-        if (loading) item { LoadingRow("Buscando códigos...") }
-        items(results) { code -> CodeSelectCard(code = code, onClick = { onSelected(code) }) }
+        if (loading) item { LoadingRow("Cargando catálogo de códigos...") }
+        if (!loading) {
+            item { Text("${filteredCodes.size} código(s) disponibles", style = MaterialTheme.typography.subtitle1) }
+        }
+        items(filteredCodes) { code -> CodeSelectCard(code = code, onClick = { onSelected(code) }) }
     }
 }
 
@@ -260,9 +290,9 @@ private fun CaptureFormStep(
     val requiresCommission = remember(code) { code.requiresCommissionReason() }
     val requiresGrantedBy = remember(code) { code.requiresGrantedBy() }
 
-    var fechaInicio by remember { mutableStateOf("") }
-    var fechaFinal by remember { mutableStateOf("") }
-    var fechaExpedida by remember { mutableStateOf("") }
+    var fechaInicio by remember { mutableStateOf(todayDateString()) }
+    var fechaFinal by remember { mutableStateOf(todayDateString()) }
+    var fechaExpedida by remember { mutableStateOf(todayDateString()) }
     var diagnostico by remember { mutableStateOf("") }
     var numLicencia by remember { mutableStateOf("") }
     var autorizaTxt by remember { mutableStateOf("") }
@@ -304,6 +334,10 @@ private fun CaptureFormStep(
                 .onFailure { error = it.userMessage() }
             loading = false
         }
+    }
+
+    LaunchedEffect(requiresPeriod) {
+        if (requiresPeriod && periods.isEmpty()) loadPeriods()
     }
 
     fun capture() {
@@ -490,6 +524,29 @@ private fun SearchBox(
             onClick = onSearch,
             modifier = Modifier.fillMaxWidth()
         ) { Text(buttonText) }
+    }
+}
+
+@Composable
+private fun CodeCategorySelector(selected: String, onSelected: (String) -> Unit) {
+    val categories = listOf("Todos", "Vacaciones", "Incapacidad", "Rango", "TXT")
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        categories.chunked(3).forEach { row ->
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                row.forEach { category ->
+                    if (category == selected) {
+                        Button(onClick = { onSelected(category) }, modifier = Modifier.weight(1f)) {
+                            Text(category)
+                        }
+                    } else {
+                        TextButton(onClick = { onSelected(category) }, modifier = Modifier.weight(1f)) {
+                            Text(category)
+                        }
+                    }
+                }
+                repeat(3 - row.size) { Spacer(modifier = Modifier.weight(1f)) }
+            }
+        }
     }
 }
 
@@ -698,6 +755,8 @@ private fun buildCaptureRequest(
         otorgado = otorgado
     )
 }
+
+private fun todayDateString(): String = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
 
 private fun parseDate(label: String, value: String): Pair<Date, String> {
     val trimmed = value.trim()

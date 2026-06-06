@@ -20,6 +20,8 @@ Cliente Android nativo para consumir la API Laravel `/api/v1` del sistema de inc
 - DatePicker nativo en captura y filtros de fecha.
 - Primer rediseño UI/UX móvil con hero headers, action cards, tarjetas elevadas y estados visuales.
 - Captura rediseñada como wizard móvil con stepper visual, tarjetas de selección y resumen de captura.
+- Selección de códigos sin teclear: catálogo cargado automáticamente, filtros locales y categorías rápidas.
+- Fechas de captura precargadas con el día actual y periodos vacacionales cargados automáticamente cuando aplican.
 - Biométrico reciente.
 - Captura en 3 pasos: empleado, código y formulario dinámico.
 - Formulario dinámico para rangos, incapacidades/médico, periodos, TXT, comisión y otorgado.
