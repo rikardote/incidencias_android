@@ -15,6 +15,7 @@ Cliente Android nativo para consumir la API Laravel `/api/v1` del sistema de inc
 - Incidencias recientes.
 - Eliminación de incidencias por token desde recientes para usuarios con captura.
 - Reporte resumen por quincena y departamento.
+- Biométrico con pestañas de recientes y asistencia por empleado.
 - Biométrico reciente.
 - Captura en 3 pasos: empleado, código y formulario dinámico.
 - Formulario dinámico para rangos, incapacidades/médico, periodos, TXT, comisión y otorgado.

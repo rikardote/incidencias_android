@@ -48,6 +48,7 @@ import mx.gob.incidencias.android.data.model.User
 import mx.gob.incidencias.android.data.session.SessionStore
 import mx.gob.incidencias.android.ui.CaptureScreen
 import mx.gob.incidencias.android.ui.EmployeeDetailScreen
+import mx.gob.incidencias.android.ui.FullBiometricScreen
 import mx.gob.incidencias.android.ui.ReportsScreen
 import mx.gob.incidencias.android.ui.theme.IncidenciasTheme
 
@@ -181,7 +182,7 @@ private fun IncidenciasApp(session: SessionStore) {
                     canDelete = user?.canCapture == true,
                     onBack = { screen = Screen.Menu }
                 )
-                Screen.Biometric -> BiometricScreen(api = api, onBack = { screen = Screen.Menu })
+                Screen.Biometric -> FullBiometricScreen(api = api, onBack = { screen = Screen.Menu })
                 Screen.CapturePlaceholder -> CaptureScreen(api = api, onBackToMenu = { screen = Screen.Menu })
             }
         }
