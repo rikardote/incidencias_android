@@ -5,6 +5,9 @@ import mx.gob.incidencias.android.data.api.bodyOrThrow
 import mx.gob.incidencias.android.data.model.Doctor
 import mx.gob.incidencias.android.data.model.Employee
 import mx.gob.incidencias.android.data.model.IncidenceCode
+import mx.gob.incidencias.android.data.model.Periodo
+import mx.gob.incidencias.android.data.model.StoreIncidenciaRequest
+import mx.gob.incidencias.android.data.model.StoreIncidenciaResponse
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -21,5 +24,13 @@ class IncidenciasRepository(
 
     suspend fun searchDoctors(query: String): Result<List<Doctor>> = withContext(Dispatchers.IO) {
         runCatching { api.doctors(query).bodyOrThrow().data }
+    }
+
+    suspend fun loadPeriodos(): Result<List<Periodo>> = withContext(Dispatchers.IO) {
+        runCatching { api.periodos().bodyOrThrow().data }
+    }
+
+    suspend fun storeIncidencia(request: StoreIncidenciaRequest): Result<StoreIncidenciaResponse> = withContext(Dispatchers.IO) {
+        runCatching { api.storeIncidencia(request).bodyOrThrow() }
     }
 }

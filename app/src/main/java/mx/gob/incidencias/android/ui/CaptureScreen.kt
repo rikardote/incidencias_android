@@ -58,10 +58,13 @@ import mx.gob.incidencias.android.ui.components.StatusPill
 import mx.gob.incidencias.android.ui.theme.Guinda
 import mx.gob.incidencias.android.ui.theme.Oro
 import mx.gob.incidencias.android.ui.theme.Verde
+import mx.gob.incidencias.android.ui.viewmodel.CaptureFormViewModel
+import mx.gob.incidencias.android.ui.viewmodel.CaptureSubmitState
 import mx.gob.incidencias.android.ui.viewmodel.CodeSearchResultState
 import mx.gob.incidencias.android.ui.viewmodel.CodeSearchViewModel
 import mx.gob.incidencias.android.ui.viewmodel.DoctorSearchResultState
 import mx.gob.incidencias.android.ui.viewmodel.DoctorSearchViewModel
+import mx.gob.incidencias.android.ui.viewmodel.PeriodsState
 import mx.gob.incidencias.android.ui.viewmodel.EmployeeSearchResultState
 import mx.gob.incidencias.android.ui.viewmodel.EmployeeSearchViewModel
 import java.text.ParseException
@@ -314,7 +317,6 @@ private fun CaptureFormStep(
     onBack: () -> Unit,
     onSuccess: (message: String, token: String) -> Unit
 ) {
-    val scope = rememberCoroutineScope()
     if (employee == null || code == null) {
         ErrorCard("Falta seleccionar empleado o codigo")
         return
@@ -333,6 +335,11 @@ private fun CaptureFormStep(
         factory = DoctorSearchViewModel.factory(repository)
     )
     val doctorUiState by doctorSearchViewModel.uiState.collectAsStateWithLifecycle()
+    val captureFormViewModel: CaptureFormViewModel = viewModel(
+        key = "capture_form_${employee.id}_${code.id}",
+        factory = CaptureFormViewModel.factory(repository)
+    )
+    val formUiState by captureFormViewModel.uiState.collectAsStateWithLifecycle()
 
     var fechaInicio by remember { mutableStateOf(todayDateString()) }
     var fechaFinal by remember { mutableStateOf(todayDateString()) }
@@ -346,63 +353,50 @@ private fun CaptureFormStep(
 
     var selectedDoctor by remember { mutableStateOf<Doctor?>(null) }
 
-    var periods by remember { mutableStateOf<List<Periodo>>(emptyList()) }
-    var selectedPeriod by remember { mutableStateOf<Periodo?>(null) }
-
-    var loading by remember { mutableStateOf(false) }
-    var error by remember { mutableStateOf<String?>(null) }
-
-    fun loadPeriods() {
-        scope.launch {
-            loading = true
-            error = null
-            runCatching { api.periodos().bodyOrThrow().data }
-                .onSuccess { periods = it }
-                .onFailure { error = it.userMessage() }
-            loading = false
-        }
-    }
+    val submitting = formUiState.submitState is CaptureSubmitState.Loading
+    val loadingPeriods = formUiState.periodsState is PeriodsState.Loading
 
     LaunchedEffect(requiresPeriod) {
-        if (requiresPeriod && periods.isEmpty()) loadPeriods()
+        if (requiresPeriod) captureFormViewModel.loadPeriods()
+    }
+
+    LaunchedEffect(formUiState.submitState) {
+        val state = formUiState.submitState
+        if (state is CaptureSubmitState.Success) {
+            onSuccess(state.message, state.token)
+            captureFormViewModel.resetSubmitState()
+        }
     }
 
     fun capture() {
-        scope.launch {
-            val request = runCatching {
-                buildCaptureRequest(
-                    employee = employee,
-                    code = code,
-                    fechaInicioText = fechaInicio,
-                    fechaFinalText = fechaFinal,
-                    requiresRange = requiresRange,
-                    requiresIncapacidad = requiresIncapacity,
-                    selectedDoctor = selectedDoctor,
-                    fechaExpedidaText = fechaExpedida,
-                    diagnosticoText = diagnostico,
-                    numLicenciaText = numLicencia,
-                    requiresPeriod = requiresPeriod,
-                    selectedPeriod = selectedPeriod,
-                    requiresTxt = requiresTxt,
-                    autorizaTxtText = autorizaTxt,
-                    coberturaTxtText = coberturaTxt,
-                    requiresCommission = requiresCommission,
-                    motivoComisionText = motivoComision,
-                    requiresGrantedBy = requiresGrantedBy,
-                    otorgadorText = otorgado
-                )
-            }.onFailure {
-                error = it.message ?: "Revisa el formulario"
-                return@launch
-            }.getOrThrow()
+        val request = runCatching {
+            buildCaptureRequest(
+                employee = employee,
+                code = code,
+                fechaInicioText = fechaInicio,
+                fechaFinalText = fechaFinal,
+                requiresRange = requiresRange,
+                requiresIncapacidad = requiresIncapacity,
+                selectedDoctor = selectedDoctor,
+                fechaExpedidaText = fechaExpedida,
+                diagnosticoText = diagnostico,
+                numLicenciaText = numLicencia,
+                requiresPeriod = requiresPeriod,
+                selectedPeriod = formUiState.selectedPeriod,
+                requiresTxt = requiresTxt,
+                autorizaTxtText = autorizaTxt,
+                coberturaTxtText = coberturaTxt,
+                requiresCommission = requiresCommission,
+                motivoComisionText = motivoComision,
+                requiresGrantedBy = requiresGrantedBy,
+                otorgadorText = otorgado
+            )
+        }.onFailure {
+            captureFormViewModel.setValidationError(it.message ?: "Revisa el formulario")
+            return
+        }.getOrThrow()
 
-            loading = true
-            error = null
-            runCatching { api.storeIncidencia(request).bodyOrThrow() }
-                .onSuccess { onSuccess(it.message, it.token) }
-                .onFailure { error = it.userMessage() }
-            loading = false
-        }
+        captureFormViewModel.submit(request)
     }
 
     LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -557,11 +551,30 @@ private fun CaptureFormStep(
         if (requiresPeriod) {
             item {
                 CaptureSectionCard(title = "Periodo vacacional", subtitle = "Selecciona el periodo aplicable") {
-                    Text(selectedPeriod?.let { "Periodo seleccionado: ${it.label.ifBlank { "${it.periodo}/${it.year}" }}" } ?: "Selecciona periodo")
-                    Button(onClick = ::loadPeriods, enabled = !loading, modifier = Modifier.fillMaxWidth()) { Text("Cargar periodos") }
-                    periods.take(12).forEach { period ->
-                        TextButton(onClick = { selectedPeriod = period }, modifier = Modifier.fillMaxWidth()) {
-                            Text(period.label.ifBlank { "Periodo ${period.periodo}/${period.year}" })
+                    formUiState.selectedPeriod?.let { selected ->
+                        StatusPill("Seleccionado: ${selected.label.ifBlank { "${selected.periodo}/${selected.year}" }}", Verde)
+                        Spacer(Modifier.height(8.dp))
+                    }
+
+                    Button(
+                        onClick = { captureFormViewModel.loadPeriods(force = true) },
+                        enabled = !loadingPeriods,
+                        modifier = Modifier.fillMaxWidth()
+                    ) { Text(if (loadingPeriods) "Cargando..." else "Actualizar periodos") }
+
+                    Spacer(Modifier.height(8.dp))
+                    when (val periodsState = formUiState.periodsState) {
+                        PeriodsState.Idle -> Text("Los periodos se cargarán automáticamente.", style = MaterialTheme.typography.caption)
+                        PeriodsState.Loading -> LoadingRow("Cargando periodos...")
+                        is PeriodsState.Error -> ErrorCard(periodsState.message)
+                        is PeriodsState.Success -> {
+                            periodsState.periods.take(12).forEach { period ->
+                                PeriodSelectRow(
+                                    period = period,
+                                    selected = formUiState.selectedPeriod?.id == period.id,
+                                    onClick = { captureFormViewModel.selectPeriod(period) }
+                                )
+                            }
                         }
                     }
                 }
@@ -607,10 +620,62 @@ private fun CaptureFormStep(
             }
         }
         item {
-            error?.let { ErrorCard(it) }
-            if (loading) LoadingRow("Procesando...")
-            Button(onClick = ::capture, enabled = !loading, modifier = Modifier.fillMaxWidth()) {
-                Text("Capturar incidencia")
+            CaptureSubmitCard(
+                submitState = formUiState.submitState,
+                submitting = submitting,
+                onSubmit = ::capture
+            )
+        }
+    }
+}
+
+@Composable
+private fun PeriodSelectRow(period: Periodo, selected: Boolean, onClick: () -> Unit) {
+    Card(
+        elevation = if (selected) 4.dp else 1.dp,
+        backgroundColor = if (selected) Verde.copy(alpha = 0.12f) else MaterialTheme.colors.surface,
+        shape = RoundedCornerShape(14.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+            .clickable(onClick = onClick)
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            StatusPill(if (selected) "OK" else "Elegir", if (selected) Verde else Oro)
+            Column(modifier = Modifier.weight(1f)) {
+                Text(period.label.ifBlank { "Periodo ${period.periodo}/${period.year}" }, fontWeight = FontWeight.Bold)
+                Text("Periodo vacacional", style = MaterialTheme.typography.caption, color = MaterialTheme.colors.onSurface.copy(alpha = 0.65f))
+            }
+        }
+    }
+}
+
+@Composable
+private fun CaptureSubmitCard(
+    submitState: CaptureSubmitState,
+    submitting: Boolean,
+    onSubmit: () -> Unit
+) {
+    Card(elevation = 4.dp, shape = RoundedCornerShape(18.dp), modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text("Finalizar captura", style = MaterialTheme.typography.subtitle1, fontWeight = FontWeight.Bold)
+            Text(
+                "Revisa la información antes de guardar. La incidencia se enviará al servidor.",
+                style = MaterialTheme.typography.caption,
+                color = MaterialTheme.colors.onSurface.copy(alpha = 0.68f)
+            )
+            when (submitState) {
+                CaptureSubmitState.Idle -> Unit
+                CaptureSubmitState.Loading -> LoadingRow("Procesando...")
+                is CaptureSubmitState.Error -> ErrorCard(submitState.message)
+                is CaptureSubmitState.Success -> SuccessCard(submitState.message)
+            }
+            Button(onClick = onSubmit, enabled = !submitting, modifier = Modifier.fillMaxWidth()) {
+                Text(if (submitting) "Guardando..." else "Guardar incidencia")
             }
         }
     }
