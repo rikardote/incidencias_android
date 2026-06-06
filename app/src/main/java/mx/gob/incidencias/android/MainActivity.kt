@@ -47,6 +47,7 @@ import mx.gob.incidencias.android.data.model.LoginRequest
 import mx.gob.incidencias.android.data.model.User
 import mx.gob.incidencias.android.data.session.SessionStore
 import mx.gob.incidencias.android.ui.CaptureScreen
+import mx.gob.incidencias.android.ui.EmployeeDetailScreen
 import mx.gob.incidencias.android.ui.theme.IncidenciasTheme
 
 class MainActivity : ComponentActivity() {
@@ -66,6 +67,7 @@ private enum class Screen {
     Login,
     Menu,
     Employees,
+    EmployeeDetail,
     Reports,
     Biometric,
     CapturePlaceholder
@@ -77,6 +79,7 @@ private fun IncidenciasApp(session: SessionStore) {
     var user by remember { mutableStateOf<User?>(null) }
     var api by remember { mutableStateOf(ApiClient.create(session.apiUrl) { session.token }) }
     var globalError by remember { mutableStateOf<String?>(null) }
+    var selectedEmployee by remember { mutableStateOf<Employee?>(null) }
     val scope = rememberCoroutineScope()
 
     fun rebuildApi() {
@@ -161,7 +164,17 @@ private fun IncidenciasApp(session: SessionStore) {
                         }
                     }
                 )
-                Screen.Employees -> EmployeeSearchScreen(api = api, onBack = { screen = Screen.Menu })
+                Screen.Employees -> EmployeeSearchScreen(
+                    api = api,
+                    onBack = { screen = Screen.Menu },
+                    onEmployeeSelected = {
+                        selectedEmployee = it
+                        screen = Screen.EmployeeDetail
+                    }
+                )
+                Screen.EmployeeDetail -> selectedEmployee?.let {
+                    EmployeeDetailScreen(api = api, employee = it, onBack = { screen = Screen.Employees })
+                } ?: run { screen = Screen.Employees }
                 Screen.Reports -> RecentReportsScreen(api = api, onBack = { screen = Screen.Menu })
                 Screen.Biometric -> BiometricScreen(api = api, onBack = { screen = Screen.Menu })
                 Screen.CapturePlaceholder -> CaptureScreen(api = api, onBackToMenu = { screen = Screen.Menu })
@@ -259,7 +272,11 @@ private fun MenuButton(title: String, subtitle: String, onClick: () -> Unit) {
 }
 
 @Composable
-private fun EmployeeSearchScreen(api: ApiService, onBack: () -> Unit) {
+private fun EmployeeSearchScreen(
+    api: ApiService,
+    onBack: () -> Unit,
+    onEmployeeSelected: (Employee) -> Unit
+) {
     val scope = rememberCoroutineScope()
     var query by remember { mutableStateOf("") }
     var loading by remember { mutableStateOf(false) }
@@ -295,13 +312,13 @@ private fun EmployeeSearchScreen(api: ApiService, onBack: () -> Unit) {
         if (loading) LoadingScreen("Buscando...")
         error?.let { ErrorCard(it) }
         LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(employees) { EmployeeCard(it) }
+            items(employees) { EmployeeCard(it, onClick = { onEmployeeSelected(it) }) }
         }
     }
 }
 
 @Composable
-private fun EmployeeCard(employee: Employee) {
+private fun EmployeeCard(employee: Employee, onClick: () -> Unit) {
     Card(elevation = 2.dp, modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(12.dp)) {
             Text("${employee.numEmpleado} - ${employee.fullName}", style = MaterialTheme.typography.subtitle1)
@@ -309,6 +326,8 @@ private fun EmployeeCard(employee: Employee) {
             if (employee.puesto.isNotBlank()) Text(employee.puesto, style = MaterialTheme.typography.body2)
             val horario = listOf(employee.horario, employee.jornada).filter { it.isNotBlank() }.joinToString(" · ")
             if (horario.isNotBlank()) Text(horario, style = MaterialTheme.typography.caption)
+            Spacer(Modifier.height(8.dp))
+            Button(onClick = onClick, modifier = Modifier.fillMaxWidth()) { Text("Ver detalle") }
         }
     }
 }

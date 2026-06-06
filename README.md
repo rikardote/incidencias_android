@@ -10,6 +10,7 @@ Cliente Android nativo para consumir la API Laravel `/api/v1` del sistema de inc
 - Token guardado localmente de forma inicial.
 - Menú principal con permisos `can_capture`.
 - Búsqueda de empleados.
+- Detalle de empleado con pestañas de incidencias, asistencia y vacaciones.
 - Incidencias recientes.
 - Biométrico reciente.
 - Captura en 3 pasos: empleado, código y formulario dinámico.
@@ -33,8 +34,8 @@ En dispositivo físico usar la IP LAN de la máquina donde corre Docker/Laravel.
 
 ## Siguiente fase
 
-Implementar detalle completo de empleado con pestañas:
+Mejoras recomendadas:
 
-1. Incidencias por empleado.
-2. Asistencia biométrica.
-3. Vacaciones.
+1. Separar pantallas en ViewModels/repositorios.
+2. Agregar filtros por fechas en detalle de empleado.
+3. Mejorar almacenamiento seguro del token con Keystore/EncryptedSharedPreferences.

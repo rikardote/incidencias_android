@@ -1,5 +1,6 @@
 package mx.gob.incidencias.android.data.model
 
+import com.google.gson.JsonElement
 import com.google.gson.annotations.SerializedName
 
 data class User(
@@ -138,6 +139,55 @@ data class AttendanceDay(
     val retardo: Boolean = false,
     val incidencias: List<String> = emptyList(),
     @SerializedName("incidencias_tokens") val incidenciasTokens: List<String> = emptyList()
+)
+
+data class EmployeeReport(
+    val id: Int = 0,
+    val token: String = "",
+    val codigo: IncidenceCode? = null,
+    val qna: JsonElement? = null,
+    val periodo: JsonElement? = null,
+    @SerializedName("fecha_inicio") val fechaInicio: String = "",
+    @SerializedName("fecha_final") val fechaFinal: String = "",
+    @SerializedName("total_dias") val totalDias: Double = 0.0,
+    @SerializedName("fecha_capturado") val fechaCapturado: String = "",
+    @SerializedName("capturado_por") val capturadoPor: String = "",
+    val diagnostico: String = "",
+    @SerializedName("num_licencia") val numLicencia: String = "",
+    @SerializedName("fecha_expedida") val fechaExpedida: String = "",
+    val otorgado: String = "",
+    @SerializedName("cobertura_txt") val coberturaTxt: String = "",
+    @SerializedName("autoriza_txt") val autorizaTxt: String = "",
+    @SerializedName("motivo_comision") val motivoComision: String = ""
+)
+
+data class EmployeeReportResponse(
+    val employee: Employee = Employee(),
+    val start: String = "",
+    val end: String = "",
+    val data: List<EmployeeReport> = emptyList()
+)
+
+data class VacationResponse(
+    val employee: Employee = Employee(),
+    val entitlement: Double = 0.0,
+    @SerializedName("total_pending") val totalPending: Double = 0.0,
+    val periods: List<VacationPeriod> = emptyList()
+)
+
+data class VacationPeriod(
+    val period: VacationPeriodInfo = VacationPeriodInfo(),
+    val entitlement: Double = 0.0,
+    val used: Double = 0.0,
+    val pending: Double = 0.0,
+    val incidencias: List<EmployeeReport> = emptyList()
+)
+
+data class VacationPeriodInfo(
+    val id: Int = 0,
+    val period: String = "",
+    val year: Int = 0,
+    val label: String = ""
 )
 
 data class AttendanceResponse(

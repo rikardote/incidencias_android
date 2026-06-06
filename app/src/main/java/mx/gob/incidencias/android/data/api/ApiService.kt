@@ -3,7 +3,9 @@ package mx.gob.incidencias.android.data.api
 import mx.gob.incidencias.android.data.model.BiometricRecord
 import mx.gob.incidencias.android.data.model.Department
 import mx.gob.incidencias.android.data.model.Doctor
+import mx.gob.incidencias.android.data.model.AttendanceResponse
 import mx.gob.incidencias.android.data.model.Employee
+import mx.gob.incidencias.android.data.model.EmployeeReportResponse
 import mx.gob.incidencias.android.data.model.IncidenceCode
 import mx.gob.incidencias.android.data.model.IncidenceRecord
 import mx.gob.incidencias.android.data.model.ListResponse
@@ -14,10 +16,12 @@ import mx.gob.incidencias.android.data.model.Qna
 import mx.gob.incidencias.android.data.model.StoreIncidenciaRequest
 import mx.gob.incidencias.android.data.model.StoreIncidenciaResponse
 import mx.gob.incidencias.android.data.model.User
+import mx.gob.incidencias.android.data.model.VacationResponse
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface ApiService {
@@ -53,6 +57,23 @@ interface ApiService {
 
     @GET("api/v1/reports/recent")
     suspend fun recentIncidencias(@Query("limit") limit: Int = 100): Response<ListResponse<IncidenceRecord>>
+
+    @GET("api/v1/reports/employee/{employee}")
+    suspend fun employeeReport(
+        @Path("employee") employeeId: Int,
+        @Query("start") start: String,
+        @Query("end") end: String
+    ): Response<EmployeeReportResponse>
+
+    @GET("api/v1/reports/employee/{employee}/vacaciones")
+    suspend fun employeeVacations(@Path("employee") employeeId: Int): Response<VacationResponse>
+
+    @GET("api/v1/biometrico/employee/{employee}/attendance")
+    suspend fun employeeAttendance(
+        @Path("employee") employeeId: Int,
+        @Query("start") start: String,
+        @Query("end") end: String
+    ): Response<AttendanceResponse>
 
     @GET("api/v1/biometrico/recent")
     suspend fun recentBiometric(@Query("limit") limit: Int = 100): Response<ListResponse<BiometricRecord>>
