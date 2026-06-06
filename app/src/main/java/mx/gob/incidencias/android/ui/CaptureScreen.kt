@@ -213,20 +213,12 @@ private fun CaptureEmployeeStep(
         }
         if (!loading && query.length < 2) {
             item {
-                Card(modifier = Modifier.fillMaxWidth(), backgroundColor = Guinda.copy(alpha = 0.05f)) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = "Escribe al menos 2 caracteres",
-                            style = MaterialTheme.typography.h6,
-                            color = Guinda
-                        )
-                        Text(
-                            text = "Por ejemplo: numero de empleado, nombre o apellidos",
-                            style = MaterialTheme.typography.body2,
-                            modifier = Modifier.padding(top = 4.dp)
-                        )
-                    }
-                }
+                Text(
+                    text = "Escribe para buscar",
+                    style = MaterialTheme.typography.caption,
+                    color = MaterialTheme.colors.onSurface.copy(alpha = 0.5f),
+                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 8.dp)
+                )
             }
         }
     }
@@ -328,23 +320,12 @@ private fun CaptureCodeStep(
 
         if (!loading && searchQuery.isBlank()) {
             item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    backgroundColor = Guinda.copy(alpha = 0.05f)
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = "Escribe el numero del codigo",
-                            style = MaterialTheme.typography.h6,
-                            color = Guinda
-                        )
-                        Text(
-                            text = "Por ejemplo: 60, 62, 53, o escribe una descripcion como 'vacaciones' o 'incapacidad'",
-                            style = MaterialTheme.typography.body2,
-                            modifier = Modifier.padding(top = 4.dp)
-                        )
-                    }
-                }
+                Text(
+                    text = "Escribe para buscar",
+                    style = MaterialTheme.typography.caption,
+                    color = MaterialTheme.colors.onSurface.copy(alpha = 0.5f),
+                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 8.dp)
+                )
             }
         }
     }

@@ -385,20 +385,12 @@ private fun EmployeeSearchScreen(
         }
         if (!loading && query.length < 2) {
             item {
-                Card(modifier = Modifier.fillMaxWidth(), backgroundColor = Guinda.copy(alpha = 0.05f)) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = "Escribe al menos 2 caracteres",
-                            style = MaterialTheme.typography.h6,
-                            color = Guinda
-                        )
-                        Text(
-                            text = "Por ejemplo: numero de empleado, nombre o apellidos",
-                            style = MaterialTheme.typography.body2,
-                            modifier = Modifier.padding(top = 4.dp)
-                        )
-                    }
-                }
+                Text(
+                    text = "Escribe para buscar",
+                    style = MaterialTheme.typography.caption,
+                    color = MaterialTheme.colors.onSurface.copy(alpha = 0.5f),
+                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 8.dp)
+                )
             }
         }
     }
