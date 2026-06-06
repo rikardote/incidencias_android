@@ -145,7 +145,8 @@ private fun IncidenciasTab(report: List<EmployeeReport>) {
                     if (qna.isNotBlank()) Text("QNA: $qna")
                     val periodo = periodLabel(record.periodo)
                     if (periodo.isNotBlank()) Text("Periodo: $periodo")
-                    if (record.diagnostico.isNotBlank()) Text("Diagnóstico: ${record.diagnostico}")
+                    val diagnostico = record.diagnostico.orEmpty()
+                    if (diagnostico.isNotBlank()) Text("Diagnóstico: $diagnostico")
                 }
             }
         }
@@ -199,7 +200,7 @@ private fun VacacionesTab(vacations: VacationResponse?) {
         items(vacations.periods) { period ->
             Card(elevation = 2.dp, modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(period.period.label.ifBlank { "Periodo ${period.period.period}/${period.period.year}" }, style = MaterialTheme.typography.subtitle1)
+                    Text(period.period.label.orEmpty().ifBlank { "Periodo ${period.period.period}/${period.period.year}" }, style = MaterialTheme.typography.subtitle1)
                     Text("Derecho: ${formatDias(period.entitlement)}")
                     Text("Usados: ${formatDias(period.used)}")
                     Text("Pendientes: ${formatDias(period.pending)}")
@@ -233,15 +234,15 @@ private fun dateRange(monthsBack: Int = 0, daysBack: Int = 0): Pair<String, Stri
     return formatter.format(start.time) to formatter.format(end.time)
 }
 
-private fun formatDate(value: String): String {
-    if (value.isBlank()) return "—"
+private fun formatDate(value: String?): String {
+    if (value.isNullOrBlank()) return "—"
     val date = value.substringBefore(" ")
     val parts = date.split("-")
     return if (parts.size == 3 && parts[0].length == 4) "${parts[2]}-${parts[1]}-${parts[0]}" else value
 }
 
-private fun extractTime(value: String): String {
-    if (value.isBlank()) return "—"
+private fun extractTime(value: String?): String {
+    if (value.isNullOrBlank()) return "—"
     val time = value.substringAfter(" ", value)
     return if (time.length >= 5) time.substring(0, 5) else time
 }

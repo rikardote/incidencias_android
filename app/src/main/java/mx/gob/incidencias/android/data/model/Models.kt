@@ -143,22 +143,22 @@ data class AttendanceDay(
 
 data class EmployeeReport(
     val id: Int = 0,
-    val token: String = "",
+    val token: String? = null,
     val codigo: IncidenceCode? = null,
     val qna: JsonElement? = null,
     val periodo: JsonElement? = null,
-    @SerializedName("fecha_inicio") val fechaInicio: String = "",
-    @SerializedName("fecha_final") val fechaFinal: String = "",
+    @SerializedName("fecha_inicio") val fechaInicio: String? = null,
+    @SerializedName("fecha_final") val fechaFinal: String? = null,
     @SerializedName("total_dias") val totalDias: Double = 0.0,
-    @SerializedName("fecha_capturado") val fechaCapturado: String = "",
-    @SerializedName("capturado_por") val capturadoPor: String = "",
-    val diagnostico: String = "",
-    @SerializedName("num_licencia") val numLicencia: String = "",
-    @SerializedName("fecha_expedida") val fechaExpedida: String = "",
-    val otorgado: String = "",
-    @SerializedName("cobertura_txt") val coberturaTxt: String = "",
-    @SerializedName("autoriza_txt") val autorizaTxt: String = "",
-    @SerializedName("motivo_comision") val motivoComision: String = ""
+    @SerializedName("fecha_capturado") val fechaCapturado: String? = null,
+    @SerializedName("capturado_por") val capturadoPor: String? = null,
+    val diagnostico: String? = null,
+    @SerializedName("num_licencia") val numLicencia: String? = null,
+    @SerializedName("fecha_expedida") val fechaExpedida: String? = null,
+    val otorgado: String? = null,
+    @SerializedName("cobertura_txt") val coberturaTxt: String? = null,
+    @SerializedName("autoriza_txt") val autorizaTxt: String? = null,
+    @SerializedName("motivo_comision") val motivoComision: String? = null
 )
 
 data class EmployeeReportResponse(
