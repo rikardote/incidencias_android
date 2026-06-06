@@ -389,6 +389,35 @@ private fun MenuButton(title: String, subtitle: String, onClick: () -> Unit) {
 }
 
 @Composable
+private fun SearchFirstPanel(
+    title: String,
+    subtitle: String,
+    accent: androidx.compose.ui.graphics.Color,
+    content: @Composable () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
+                    Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                StatusPill("Autocomplete", accent)
+            }
+            content()
+        }
+    }
+}
+
+@Composable
 private fun EmployeeSearchScreen(
     api: ApiService,
     onBack: () -> Unit,
@@ -404,23 +433,18 @@ private fun EmployeeSearchScreen(
     LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         item { TextButton(onClick = onBack) { Text("<- Menu") } }
         item {
-            HeroHeader(
-                title = "Buscar empleados",
-                subtitle = "Escribe numero, nombre o apellidos",
-                icon = "🔍"
-            )
-        }
-        item {
-            Card(modifier = Modifier.fillMaxWidth(), elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)) {
-                Column(modifier = Modifier.padding(12.dp)) {
-                    OutlinedTextField(
-                        value = uiState.query,
-                        onValueChange = searchViewModel::onQueryChange,
-                        label = { Text("Numero o nombre del empleado") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
-                    )
-                }
+            SearchFirstPanel(
+                title = "Buscar empleado",
+                subtitle = "Autocompleta por número, nombre o apellidos",
+                accent = VerdeDark
+            ) {
+                OutlinedTextField(
+                    value = uiState.query,
+                    onValueChange = searchViewModel::onQueryChange,
+                    label = { Text("Número o nombre") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
             }
         }
 

@@ -174,16 +174,18 @@ private fun CaptureEmployeeStep(
         }
         item { CaptureStepper(current = 1) }
         item {
-            Card(modifier = Modifier.fillMaxWidth(), elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)) {
-                Column(modifier = Modifier.padding(12.dp)) {
-                    OutlinedTextField(
-                        value = uiState.query,
-                        onValueChange = searchViewModel::onQueryChange,
-                        label = { Text("Numero o nombre del empleado") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
-                    )
-                }
+            CaptureSearchPanel(
+                title = "Encuentra al empleado",
+                subtitle = "Escribe número, nombre o apellidos; la lista se actualiza sola",
+                pill = "Empleado"
+            ) {
+                OutlinedTextField(
+                    value = uiState.query,
+                    onValueChange = searchViewModel::onQueryChange,
+                    label = { Text("Número o nombre") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
             }
         }
 
@@ -251,19 +253,18 @@ private fun CaptureCodeStep(
         item { employee?.let { SelectedEmployeeSummary(it) } }
 
         item {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+            CaptureSearchPanel(
+                title = "Código de incidencia",
+                subtitle = "Captura el número o una palabra clave para filtrar el catálogo",
+                pill = "Catálogo"
             ) {
-                Column(modifier = Modifier.padding(12.dp)) {
-                    OutlinedTextField(
-                        value = uiState.query,
-                        onValueChange = codeSearchViewModel::onQueryChange,
-                        label = { Text("Numero de codigo o descripcion") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
-                    )
-                }
+                OutlinedTextField(
+                    value = uiState.query,
+                    onValueChange = codeSearchViewModel::onQueryChange,
+                    label = { Text("Número o descripción") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
             }
         }
 
@@ -306,6 +307,35 @@ private fun CaptureCodeStep(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun CaptureSearchPanel(
+    title: String,
+    subtitle: String,
+    pill: String,
+    content: @Composable () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black)
+                    Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                StatusPill(pill, Guinda)
+            }
+            content()
         }
     }
 }
