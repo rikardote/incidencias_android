@@ -255,7 +255,7 @@ private fun MenuScreen(
 
         MenuButton("Buscar empleados", "Consulta por número o nombre", onEmployees)
         if (user?.canCapture == true) {
-            MenuButton("Capturar incidencia", "Flujo de captura en desarrollo", onCapture)
+            MenuButton("Capturar incidencia", "Registro guiado con formularios dinámicos", onCapture)
         }
         MenuButton("Incidencias recientes", "Últimos registros capturados", onReports)
         MenuButton("Biométrico", "Checadas recientes", onBiometric)

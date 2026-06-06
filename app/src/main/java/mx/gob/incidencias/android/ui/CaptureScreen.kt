@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Button
 import androidx.compose.material.Card
 import androidx.compose.material.CircularProgressIndicator
@@ -25,7 +24,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import mx.gob.incidencias.android.data.api.ApiException
@@ -36,6 +34,7 @@ import mx.gob.incidencias.android.data.model.Employee
 import mx.gob.incidencias.android.data.model.IncidenceCode
 import mx.gob.incidencias.android.data.model.Periodo
 import mx.gob.incidencias.android.data.model.StoreIncidenciaRequest
+import mx.gob.incidencias.android.ui.components.DatePickerField
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -314,10 +313,10 @@ private fun CaptureFormStep(
         item { CaptureContextCard(employee, code) }
         item {
             SectionCard(title = "Fechas") {
-                DateField("Fecha inicio", fechaInicio) { fechaInicio = it }
+                DatePickerField(label = "Fecha inicio", value = fechaInicio, onValueChange = { fechaInicio = it })
                 if (requiresRange) {
                     Spacer(Modifier.height(8.dp))
-                    DateField("Fecha final", fechaFinal) { fechaFinal = it }
+                    DatePickerField(label = "Fecha final", value = fechaFinal, onValueChange = { fechaFinal = it })
                 }
             }
         }
@@ -344,7 +343,7 @@ private fun CaptureFormStep(
                         }
                     }
                     Divider(modifier = Modifier.padding(vertical = 8.dp))
-                    DateField("Fecha expedida", fechaExpedida) { fechaExpedida = it }
+                    DatePickerField(label = "Fecha expedida", value = fechaExpedida, onValueChange = { fechaExpedida = it })
                     Spacer(Modifier.height(8.dp))
                     OutlinedTextField(
                         value = diagnostico,
@@ -496,19 +495,6 @@ private fun SectionCard(title: String, content: @Composable ColumnScopeLike.() -
 }
 
 private object ColumnScopeLike
-
-@Composable
-private fun DateField(label: String, value: String, onValueChange: (String) -> Unit) {
-    OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
-        label = { Text(label) },
-        placeholder = { Text("YYYYMMDD o YYYY-MM-DD") },
-        singleLine = true,
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-        modifier = Modifier.fillMaxWidth()
-    )
-}
 
 @Composable
 private fun LoadingRow(message: String) {

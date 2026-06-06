@@ -13,7 +13,6 @@ import androidx.compose.material.Button
 import androidx.compose.material.Card
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.MaterialTheme
-import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Tab
 import androidx.compose.material.TabRow
 import androidx.compose.material.Text
@@ -37,6 +36,7 @@ import mx.gob.incidencias.android.data.model.AttendanceResponse
 import mx.gob.incidencias.android.data.model.Employee
 import mx.gob.incidencias.android.data.model.EmployeeReport
 import mx.gob.incidencias.android.data.model.VacationResponse
+import mx.gob.incidencias.android.ui.components.DatePickerField
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -177,35 +177,31 @@ private fun FilterCard(
             Text("Filtros", style = MaterialTheme.typography.h6)
             Text("Incidencias", style = MaterialTheme.typography.subtitle2)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                OutlinedTextField(
+                DatePickerField(
+                    label = "Inicio",
                     value = incidenceStart,
                     onValueChange = onIncidenceStartChange,
-                    label = { Text("Inicio") },
-                    singleLine = true,
                     modifier = Modifier.weight(1f)
                 )
-                OutlinedTextField(
+                DatePickerField(
+                    label = "Fin",
                     value = incidenceEnd,
                     onValueChange = onIncidenceEndChange,
-                    label = { Text("Fin") },
-                    singleLine = true,
                     modifier = Modifier.weight(1f)
                 )
             }
             Text("Asistencia", style = MaterialTheme.typography.subtitle2)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                OutlinedTextField(
+                DatePickerField(
+                    label = "Inicio",
                     value = attendanceStart,
                     onValueChange = onAttendanceStartChange,
-                    label = { Text("Inicio") },
-                    singleLine = true,
                     modifier = Modifier.weight(1f)
                 )
-                OutlinedTextField(
+                DatePickerField(
+                    label = "Fin",
                     value = attendanceEnd,
                     onValueChange = onAttendanceEndChange,
-                    label = { Text("Fin") },
-                    singleLine = true,
                     modifier = Modifier.weight(1f)
                 )
             }

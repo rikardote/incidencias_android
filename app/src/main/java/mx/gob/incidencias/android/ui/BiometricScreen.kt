@@ -33,6 +33,7 @@ import mx.gob.incidencias.android.data.model.AttendanceDay
 import mx.gob.incidencias.android.data.model.AttendanceResponse
 import mx.gob.incidencias.android.data.model.BiometricRecord
 import mx.gob.incidencias.android.data.model.Employee
+import mx.gob.incidencias.android.ui.components.DatePickerField
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -244,18 +245,16 @@ private fun EmployeeAttendanceTab(
                 Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("Rango de asistencia", style = MaterialTheme.typography.h6)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                        OutlinedTextField(
+                        DatePickerField(
+                            label = "Inicio",
                             value = startDate,
                             onValueChange = onStartChange,
-                            label = { Text("Inicio") },
-                            singleLine = true,
                             modifier = Modifier.weight(1f)
                         )
-                        OutlinedTextField(
+                        DatePickerField(
+                            label = "Fin",
                             value = endDate,
                             onValueChange = onEndChange,
-                            label = { Text("Fin") },
-                            singleLine = true,
                             modifier = Modifier.weight(1f)
                         )
                     }
