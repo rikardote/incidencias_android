@@ -36,6 +36,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
@@ -125,7 +126,15 @@ private fun IncidenciasApp(session: SessionStore) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
+                .background(
+                    Brush.verticalGradient(
+                        listOf(
+                            MaterialTheme.colorScheme.background,
+                            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.38f),
+                            MaterialTheme.colorScheme.background
+                        )
+                    )
+                )
                 .padding(padding)
                 .padding(16.dp)
         ) {
@@ -249,7 +258,17 @@ private fun LoginScreen(
                     ) {
                         Text("Entrar")
                     }
-                    Text("Emulador: http://10.0.2.2:8190/", style = MaterialTheme.typography.labelSmall)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            "Emulador: http://10.0.2.2:8190/",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        StatusPill("v${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})", Verde)
+                    }
                 }
             }
         }

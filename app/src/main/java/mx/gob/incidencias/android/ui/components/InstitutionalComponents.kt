@@ -1,10 +1,12 @@
 package mx.gob.incidencias.android.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -15,7 +17,9 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -24,6 +28,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import mx.gob.incidencias.android.ui.theme.Guinda
@@ -31,6 +36,7 @@ import mx.gob.incidencias.android.ui.theme.GuindaDark
 import mx.gob.incidencias.android.ui.theme.Oro
 import mx.gob.incidencias.android.ui.theme.OroLight
 import mx.gob.incidencias.android.ui.theme.Spacing
+import mx.gob.incidencias.android.ui.theme.Verde
 import mx.gob.incidencias.android.ui.theme.VerdeDark
 
 @Composable
@@ -40,46 +46,66 @@ fun HeroHeader(
     icon: String,
     modifier: Modifier = Modifier
 ) {
-    Card(
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-        shape = RoundedCornerShape(24.dp),
+    ElevatedCard(
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 3.dp),
+        shape = RoundedCornerShape(28.dp),
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
     ) {
         Box(
             modifier = Modifier
                 .background(
-                    Brush.horizontalGradient(
+                    Brush.linearGradient(
                         listOf(VerdeDark, GuindaDark, Guinda)
                     )
                 )
                 .padding(Spacing.xl)
         ) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .size(118.dp)
+                    .clip(CircleShape)
+                    .background(OroLight.copy(alpha = 0.10f))
+            )
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .size(64.dp)
+                    .clip(CircleShape)
+                    .background(Color.White.copy(alpha = 0.06f))
+            )
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(Spacing.lg),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Box(
-                    contentAlignment = Alignment.Center,
+                Surface(
+                    shape = CircleShape,
+                    color = Color.White.copy(alpha = 0.13f),
                     modifier = Modifier
-                        .size(56.dp)
-                        .clip(CircleShape)
-                        .background(OroLight.copy(alpha = 0.18f))
+                        .size(58.dp)
+                        .border(1.dp, Color.White.copy(alpha = 0.18f), CircleShape)
                 ) {
-                    Text(icon, fontSize = 28.sp)
+                    Box(contentAlignment = Alignment.Center) {
+                        Text(icon, fontSize = 27.sp)
+                    }
                 }
                 Column(verticalArrangement = Arrangement.spacedBy(Spacing.xs), modifier = Modifier.weight(1f)) {
                     Text(
                         title,
                         color = Color.White,
                         style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Black
+                        fontWeight = FontWeight.Black,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
                     )
                     Text(
                         subtitle,
                         color = Color.White.copy(alpha = 0.84f),
-                        style = MaterialTheme.typography.bodyMedium
+                        style = MaterialTheme.typography.bodyMedium,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
             }
@@ -96,11 +122,12 @@ fun ActionCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Card(
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-        shape = RoundedCornerShape(22.dp),
+    ElevatedCard(
+        onClick = onClick,
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(24.dp),
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(
             verticalArrangement = Arrangement.spacedBy(Spacing.md),
@@ -111,31 +138,34 @@ fun ActionCard(
                 horizontalArrangement = Arrangement.spacedBy(Spacing.md),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(accent.copy(alpha = 0.12f))
+                Surface(
+                    shape = RoundedCornerShape(18.dp),
+                    color = accent.copy(alpha = 0.12f),
+                    modifier = Modifier.size(52.dp)
                 ) {
-                    Text(icon, fontSize = 24.sp)
+                    Box(contentAlignment = Alignment.Center) {
+                        Text(icon, fontSize = 24.sp)
+                    }
                 }
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                    Text(title, fontWeight = FontWeight.Black, style = MaterialTheme.typography.titleMedium)
+                    Spacer(Modifier.height(Spacing.xs))
                     Text(
                         subtitle,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        style = MaterialTheme.typography.bodySmall
+                        style = MaterialTheme.typography.bodySmall,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
             }
             Button(
                 onClick = onClick,
                 colors = ButtonDefaults.buttonColors(containerColor = accent, contentColor = Color.White),
-                shape = RoundedCornerShape(14.dp),
+                shape = RoundedCornerShape(16.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Abrir")
+                Text("Abrir", fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -149,31 +179,45 @@ fun SectionCard(
     content: @Composable () -> Unit
 ) {
     Card(
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-        shape = RoundedCornerShape(22.dp),
-        modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        shape = RoundedCornerShape(24.dp),
+        modifier = modifier
+            .fillMaxWidth()
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.70f), RoundedCornerShape(24.dp)),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.96f))
     ) {
         Column(
             verticalArrangement = Arrangement.spacedBy(Spacing.md),
             modifier = Modifier.padding(Spacing.lg)
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
-                Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
-                if (!subtitle.isNullOrBlank()) {
-                    Text(
-                        subtitle,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(10.dp)
+                        .clip(CircleShape)
+                        .background(Brush.linearGradient(listOf(Guinda, Oro)))
+                )
+                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+                    Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
+                    if (!subtitle.isNullOrBlank()) {
+                        Text(
+                            subtitle,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
             Box(
                 modifier = Modifier
-                    .height(3.dp)
+                    .height(2.dp)
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(99.dp))
-                    .background(Brush.horizontalGradient(listOf(Guinda, Oro)))
+                    .background(Brush.horizontalGradient(listOf(Guinda.copy(alpha = 0.85f), Oro.copy(alpha = 0.65f), Verde.copy(alpha = 0.55f))))
             )
             content()
         }
@@ -186,12 +230,19 @@ fun StatusPill(
     color: Color,
     modifier: Modifier = Modifier
 ) {
-    Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(99.dp))
-            .background(color.copy(alpha = 0.12f))
-            .padding(horizontal = 12.dp, vertical = 6.dp)
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(99.dp),
+        color = color.copy(alpha = 0.12f),
+        contentColor = color
     ) {
-        Text(text, color = color, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelSmall)
+        Text(
+            text,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+            fontWeight = FontWeight.Black,
+            style = MaterialTheme.typography.labelSmall,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }
