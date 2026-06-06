@@ -46,6 +46,7 @@ import mx.gob.incidencias.android.data.model.IncidenceRecord
 import mx.gob.incidencias.android.data.model.LoginRequest
 import mx.gob.incidencias.android.data.model.User
 import mx.gob.incidencias.android.data.session.SessionStore
+import mx.gob.incidencias.android.ui.CaptureScreen
 import mx.gob.incidencias.android.ui.theme.IncidenciasTheme
 
 class MainActivity : ComponentActivity() {
@@ -163,7 +164,7 @@ private fun IncidenciasApp(session: SessionStore) {
                 Screen.Employees -> EmployeeSearchScreen(api = api, onBack = { screen = Screen.Menu })
                 Screen.Reports -> RecentReportsScreen(api = api, onBack = { screen = Screen.Menu })
                 Screen.Biometric -> BiometricScreen(api = api, onBack = { screen = Screen.Menu })
-                Screen.CapturePlaceholder -> CapturePlaceholderScreen(onBack = { screen = Screen.Menu })
+                Screen.CapturePlaceholder -> CaptureScreen(api = api, onBackToMenu = { screen = Screen.Menu })
             }
         }
     }

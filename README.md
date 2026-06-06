@@ -12,7 +12,8 @@ Cliente Android nativo para consumir la API Laravel `/api/v1` del sistema de inc
 - Búsqueda de empleados.
 - Incidencias recientes.
 - Biométrico reciente.
-- Captura queda preparada como siguiente fase.
+- Captura en 3 pasos: empleado, código y formulario dinámico.
+- Formulario dinámico para rangos, incapacidades/médico, periodos, TXT, comisión y otorgado.
 
 ## API local
 
@@ -32,8 +33,8 @@ En dispositivo físico usar la IP LAN de la máquina donde corre Docker/Laravel.
 
 ## Siguiente fase
 
-Implementar captura en 3 pasos:
+Implementar detalle completo de empleado con pestañas:
 
-1. Seleccionar empleado.
-2. Seleccionar código.
-3. Formulario dinámico y `POST /api/v1/incidencias`.
+1. Incidencias por empleado.
+2. Asistencia biométrica.
+3. Vacaciones.
