@@ -204,17 +204,20 @@ private fun BiometricCompactRow(record: BiometricRecord) {
                 Text(formatDateShort(record.fecha), style = MaterialTheme.typography.caption)
             }
             Column(modifier = Modifier.weight(0.56f)) {
+                val nameParts = splitEmployeeName(record.employee?.fullName.orEmpty())
                 Text(
-                    record.employee?.fullName ?: "Empleado ${record.numEmpleado}",
+                    nameParts.surnames.ifBlank { "Empleado ${record.numEmpleado}" },
                     style = MaterialTheme.typography.body2,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
-                    "Registro biométrico",
+                    nameParts.names,
                     style = MaterialTheme.typography.caption,
-                    color = MaterialTheme.colors.onSurface.copy(alpha = 0.62f)
+                    color = MaterialTheme.colors.onSurface.copy(alpha = 0.72f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
             Column(modifier = Modifier.weight(0.20f)) {
@@ -400,6 +403,17 @@ private fun ErrorCard(message: String) {
     Card(backgroundColor = MaterialTheme.colors.error.copy(alpha = 0.10f), modifier = Modifier.fillMaxWidth()) {
         Text(message, color = MaterialTheme.colors.error, modifier = Modifier.padding(12.dp))
     }
+}
+
+private data class EmployeeNameParts(val surnames: String, val names: String)
+
+private fun splitEmployeeName(fullName: String): EmployeeNameParts {
+    val parts = fullName.trim().split(Regex("\\s+")).filter { it.isNotBlank() }
+    if (parts.isEmpty()) return EmployeeNameParts("", "")
+    if (parts.size <= 2) return EmployeeNameParts(parts.joinToString(" "), "")
+    val surnames = parts.takeLast(2).joinToString(" ")
+    val names = parts.dropLast(2).joinToString(" ")
+    return EmployeeNameParts(surnames = surnames, names = names)
 }
 
 private fun dateRange(daysBack: Int): Pair<String, String> {
