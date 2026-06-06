@@ -25,7 +25,6 @@ import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
-import androidx.compose.material.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -116,18 +115,7 @@ private fun IncidenciasApp(session: SessionStore) {
             }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Incidencias", color = androidx.compose.ui.graphics.Color.White) },
-                backgroundColor = Guinda,
-                elevation = 8.dp,
-                actions = {
-                    user?.let { Text(it.name, color = androidx.compose.ui.graphics.Color.White, modifier = Modifier.padding(end = 12.dp)) }
-                }
-            )
-        }
-    ) { padding ->
+    Scaffold { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
