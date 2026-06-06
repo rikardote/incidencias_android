@@ -13,6 +13,7 @@ import mx.gob.incidencias.android.data.model.LoginRequest
 import mx.gob.incidencias.android.data.model.LoginResponse
 import mx.gob.incidencias.android.data.model.Periodo
 import mx.gob.incidencias.android.data.model.Qna
+import mx.gob.incidencias.android.data.model.QnaSummary
 import mx.gob.incidencias.android.data.model.StoreIncidenciaRequest
 import mx.gob.incidencias.android.data.model.StoreIncidenciaResponse
 import mx.gob.incidencias.android.data.model.User
@@ -61,6 +62,12 @@ interface ApiService {
 
     @GET("api/v1/reports/recent")
     suspend fun recentIncidencias(@Query("limit") limit: Int = 100): Response<ListResponse<IncidenceRecord>>
+
+    @GET("api/v1/reports/qna-summary")
+    suspend fun qnaSummary(
+        @Query("qna_id") qnaId: Int,
+        @Query("department_id") departmentId: Int
+    ): Response<ListResponse<QnaSummary>>
 
     @GET("api/v1/reports/employee/{employee}")
     suspend fun employeeReport(

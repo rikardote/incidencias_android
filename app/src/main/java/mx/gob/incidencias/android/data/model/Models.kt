@@ -168,6 +168,13 @@ data class EmployeeReportResponse(
     val data: List<EmployeeReport> = emptyList()
 )
 
+data class QnaSummary(
+    val code: String = "",
+    val description: String = "",
+    val registros: Int = 0,
+    val dias: Double = 0.0
+)
+
 data class VacationResponse(
     val employee: Employee = Employee(),
     val entitlement: Double = 0.0,

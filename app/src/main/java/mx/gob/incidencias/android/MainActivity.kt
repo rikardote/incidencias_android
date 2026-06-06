@@ -48,6 +48,7 @@ import mx.gob.incidencias.android.data.model.User
 import mx.gob.incidencias.android.data.session.SessionStore
 import mx.gob.incidencias.android.ui.CaptureScreen
 import mx.gob.incidencias.android.ui.EmployeeDetailScreen
+import mx.gob.incidencias.android.ui.ReportsScreen
 import mx.gob.incidencias.android.ui.theme.IncidenciasTheme
 
 class MainActivity : ComponentActivity() {
@@ -175,7 +176,7 @@ private fun IncidenciasApp(session: SessionStore) {
                 Screen.EmployeeDetail -> selectedEmployee?.let {
                     EmployeeDetailScreen(api = api, employee = it, onBack = { screen = Screen.Employees })
                 } ?: run { screen = Screen.Employees }
-                Screen.Reports -> RecentReportsScreen(
+                Screen.Reports -> ReportsScreen(
                     api = api,
                     canDelete = user?.canCapture == true,
                     onBack = { screen = Screen.Menu }
