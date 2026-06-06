@@ -18,7 +18,6 @@ import androidx.compose.material.Button
 import androidx.compose.material.Card
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Divider
-import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
@@ -196,136 +195,112 @@ private fun CaptureCodeStep(
     onSelected: (IncidenceCode) -> Unit
 ) {
     val scope = rememberCoroutineScope()
+    var searchQuery by remember { mutableStateOf("") }
     var loading by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
-    var results by remember { mutableStateOf<List<IncidenceCode>>(emptyList()) }
-    var category by remember { mutableStateOf<String?>(null) }
+    var allCodes by remember { mutableStateOf<List<IncidenceCode>>(emptyList()) }
 
-    fun loadAllCodes() {
+    LaunchedEffect(Unit) {
         scope.launch {
             loading = true
             error = null
             runCatching { api.incidenceCodes(null).bodyOrThrow().data }
-                .onSuccess { results = it.sortedBy { code -> code.code.padStart(4, '0') } }
+                .onSuccess { allCodes = it.sortedBy { code -> code.code.padStart(4, '0') } }
                 .onFailure { error = it.userMessage() }
             loading = false
         }
     }
 
-    LaunchedEffect(Unit) { loadAllCodes() }
-
-    val displayCodes = category?.let { cat ->
-        results.filter { code ->
-            when (cat) {
-                "Vacaciones" -> code.requiresPeriod() || code.isVacacional
-                "Incapacidad" -> code.requiresIncapacidadDetails()
-                "Rango" -> code.requiresDateRange()
-                "TXT" -> code.requiresTxtFields()
-                else -> true
-            }
+    val filteredCodes = if (searchQuery.isBlank()) {
+        emptyList()
+    } else {
+        allCodes.filter { code ->
+            code.code.contains(searchQuery, ignoreCase = true) ||
+            code.description.contains(searchQuery, ignoreCase = true)
         }
-    } ?: results
+    }
 
     LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         item { TextButton(onClick = onBack) { Text("<- Menu") } }
         item {
             HeroHeader(
                 title = "Codigo de incidencia",
-                subtitle = employee?.fullName ?: "Elige el tipo de incidencia",
+                subtitle = employee?.fullName ?: "Escribe el numero del codigo",
                 icon = "#"
             )
         }
         item { CaptureStepper(current = 2) }
         item { employee?.let { SelectedEmployeeSummary(it) } }
 
-        // Botones de categoria grandes
         item {
-            Row(
+            Card(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                elevation = 2.dp
             ) {
-                listOf(
-                    "Vacaciones" to "V",
-                    "Incapacidad" to "I",
-                    "Rango" to "R",
-                    "TXT" to "T"
-                ).forEach { (cat, abbr) ->
-                    val count = results.count { code ->
-                        when (cat) {
-                            "Vacaciones" -> code.requiresPeriod() || code.isVacacional
-                            "Incapacidad" -> code.requiresIncapacidadDetails()
-                            "Rango" -> code.requiresDateRange()
-                            "TXT" -> code.requiresTxtFields()
-                            else -> true
-                        }
-                    }
-                    CategoryButton(
-                        label = cat,
-                        abbr = abbr,
-                        count = count,
-                        selected = category == cat,
-                        onClick = {
-                            category = if (category == cat) null else cat
-                        },
-                        modifier = Modifier.weight(1f)
+                Column(modifier = Modifier.padding(12.dp)) {
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        label = { Text("Numero de codigo o descripcion") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
                     )
                 }
             }
         }
 
         error?.let { item { ErrorCard(it) } }
-        if (loading) item { LoadingRow("Cargando...") }
-        if (!loading) {
+        if (loading) item { LoadingRow("Cargando codigos...") }
+
+        if (!loading && searchQuery.isNotBlank()) {
             item {
                 Text(
-                    text = if (category != null) "$category: ${displayCodes.size} codigo(s)" else "Todos: ${displayCodes.size} codigo(s)",
-                    style = MaterialTheme.typography.subtitle1,
-                    modifier = Modifier.padding(horizontal = 4.dp)
+                    text = "${filteredCodes.size} coincidencia(s)",
+                    style = MaterialTheme.typography.subtitle2,
+                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 8.dp)
                 )
             }
-            items(displayCodes) { code ->
-                CodeSelectCard(code = code, onClick = { onSelected(code) })
+            
+            if (filteredCodes.isEmpty()) {
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        backgroundColor = Oro.copy(alpha = 0.1f)
+                    ) {
+                        Text(
+                            text = "No se encontraron codigos que coincidan con '$searchQuery'",
+                            modifier = Modifier.padding(16.dp),
+                            color = Oro
+                        )
+                    }
+                }
+            } else {
+                items(filteredCodes) { code ->
+                    CodeSelectCard(code = code, onClick = { onSelected(code) })
+                }
             }
         }
-    }
-}
 
-@OptIn(ExperimentalMaterialApi::class)
-@Composable
-private fun CategoryButton(
-    label: String,
-    abbr: String,
-    count: Int,
-    selected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val bgColor = if (selected) Guinda else Guinda.copy(alpha = 0.1f)
-    val textColor = if (selected) Color.White else Guinda
-
-    Card(
-        modifier = modifier,
-        elevation = if (selected) 4.dp else 0.dp,
-        backgroundColor = bgColor,
-        onClick = onClick
-    ) {
-        Column(
-            modifier = Modifier.padding(vertical = 12.dp, horizontal = 4.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(abbr, style = MaterialTheme.typography.h6, fontWeight = FontWeight.Bold, color = textColor)
-            Spacer(Modifier.height(2.dp))
-            Text(
-                text = label,
-                style = MaterialTheme.typography.caption,
-                fontWeight = FontWeight.Bold,
-                color = textColor
-            )
-            Text(
-                text = "$count",
-                style = MaterialTheme.typography.caption,
-                color = textColor.copy(alpha = 0.7f)
-            )
+        if (!loading && searchQuery.isBlank()) {
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    backgroundColor = Guinda.copy(alpha = 0.05f)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = "Escribe el numero del codigo",
+                            style = MaterialTheme.typography.h6,
+                            color = Guinda
+                        )
+                        Text(
+                            text = "Por ejemplo: 60, 62, 53, o escribe una descripcion como 'vacaciones' o 'incapacidad'",
+                            style = MaterialTheme.typography.body2,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                    }
+                }
+            }
         }
     }
 }
