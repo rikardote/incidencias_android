@@ -58,6 +58,10 @@ import mx.gob.incidencias.android.ui.components.StatusPill
 import mx.gob.incidencias.android.ui.theme.Guinda
 import mx.gob.incidencias.android.ui.theme.Oro
 import mx.gob.incidencias.android.ui.theme.Verde
+import mx.gob.incidencias.android.ui.viewmodel.CodeSearchResultState
+import mx.gob.incidencias.android.ui.viewmodel.CodeSearchViewModel
+import mx.gob.incidencias.android.ui.viewmodel.DoctorSearchResultState
+import mx.gob.incidencias.android.ui.viewmodel.DoctorSearchViewModel
 import mx.gob.incidencias.android.ui.viewmodel.EmployeeSearchResultState
 import mx.gob.incidencias.android.ui.viewmodel.EmployeeSearchViewModel
 import java.text.ParseException
@@ -223,31 +227,12 @@ private fun CaptureCodeStep(
     onBack: () -> Unit,
     onSelected: (IncidenceCode) -> Unit
 ) {
-    val scope = rememberCoroutineScope()
-    var searchQuery by remember { mutableStateOf("") }
-    var loading by remember { mutableStateOf(false) }
-    var error by remember { mutableStateOf<String?>(null) }
-    var allCodes by remember { mutableStateOf<List<IncidenceCode>>(emptyList()) }
-
-    LaunchedEffect(Unit) {
-        scope.launch {
-            loading = true
-            error = null
-            runCatching { api.incidenceCodes(null).bodyOrThrow().data }
-                .onSuccess { allCodes = it.sortedBy { code -> code.code.padStart(4, '0') } }
-                .onFailure { error = it.userMessage() }
-            loading = false
-        }
-    }
-
-    val filteredCodes = if (searchQuery.isBlank()) {
-        emptyList()
-    } else {
-        allCodes.filter { code ->
-            code.code.contains(searchQuery, ignoreCase = true) ||
-            code.description.contains(searchQuery, ignoreCase = true)
-        }
-    }
+    val repository = remember(api) { IncidenciasRepository(api) }
+    val codeSearchViewModel: CodeSearchViewModel = viewModel(
+        key = "capture_code_search",
+        factory = CodeSearchViewModel.factory(repository)
+    )
+    val uiState by codeSearchViewModel.uiState.collectAsStateWithLifecycle()
 
     LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         item { TextButton(onClick = onBack) { Text("<- Menu") } }
@@ -268,8 +253,8 @@ private fun CaptureCodeStep(
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
                     OutlinedTextField(
-                        value = searchQuery,
-                        onValueChange = { searchQuery = it },
+                        value = uiState.query,
+                        onValueChange = codeSearchViewModel::onQueryChange,
                         label = { Text("Numero de codigo o descripcion") },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true
@@ -278,46 +263,44 @@ private fun CaptureCodeStep(
             }
         }
 
-        error?.let { item { ErrorCard(it) } }
-        if (loading) item { LoadingRow("Cargando codigos...") }
-
-        if (!loading && searchQuery.isNotBlank()) {
-            item {
-                Text(
-                    text = "${filteredCodes.size} coincidencia(s)",
-                    style = MaterialTheme.typography.subtitle2,
-                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 8.dp)
-                )
-            }
-            
-            if (filteredCodes.isEmpty()) {
-                item {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        backgroundColor = Oro.copy(alpha = 0.1f)
-                    ) {
-                        Text(
-                            text = "No se encontraron codigos que coincidan con '$searchQuery'",
-                            modifier = Modifier.padding(16.dp),
-                            color = Oro
-                        )
-                    }
-                }
-            } else {
-                items(filteredCodes, key = { it.id }) { code ->
-                    CodeSelectCard(code = code, onClick = { onSelected(code) })
-                }
-            }
-        }
-
-        if (!loading && searchQuery.isBlank()) {
-            item {
+        when (val result = uiState.result) {
+            CodeSearchResultState.Idle -> item {
                 Text(
                     text = "Escribe para buscar",
                     style = MaterialTheme.typography.caption,
                     color = MaterialTheme.colors.onSurface.copy(alpha = 0.5f),
                     modifier = Modifier.padding(horizontal = 4.dp, vertical = 8.dp)
                 )
+            }
+            CodeSearchResultState.LoadingCatalog -> item { LoadingRow("Cargando codigos...") }
+            is CodeSearchResultState.Error -> item { ErrorCard(result.message) }
+            is CodeSearchResultState.Success -> {
+                item {
+                    Text(
+                        text = "${result.codes.size} coincidencia(s)",
+                        style = MaterialTheme.typography.subtitle2,
+                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 8.dp)
+                    )
+                }
+
+                if (result.codes.isEmpty()) {
+                    item {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            backgroundColor = Oro.copy(alpha = 0.1f)
+                        ) {
+                            Text(
+                                text = "No se encontraron codigos que coincidan con '${uiState.query}'",
+                                modifier = Modifier.padding(16.dp),
+                                color = Oro
+                            )
+                        }
+                    }
+                } else {
+                    items(result.codes, key = { it.id }) { code ->
+                        CodeSelectCard(code = code, onClick = { onSelected(code) })
+                    }
+                }
             }
         }
     }
@@ -344,6 +327,13 @@ private fun CaptureFormStep(
     val requiresCommission = remember(code) { code.requiresCommissionReason() }
     val requiresGrantedBy = remember(code) { code.requiresGrantedBy() }
 
+    val repository = remember(api) { IncidenciasRepository(api) }
+    val doctorSearchViewModel: DoctorSearchViewModel = viewModel(
+        key = "capture_doctor_search_${code.id}",
+        factory = DoctorSearchViewModel.factory(repository)
+    )
+    val doctorUiState by doctorSearchViewModel.uiState.collectAsStateWithLifecycle()
+
     var fechaInicio by remember { mutableStateOf(todayDateString()) }
     var fechaFinal by remember { mutableStateOf(todayDateString()) }
     var fechaExpedida by remember { mutableStateOf(todayDateString()) }
@@ -354,8 +344,6 @@ private fun CaptureFormStep(
     var motivoComision by remember { mutableStateOf("") }
     var otorgado by remember { mutableStateOf("") }
 
-    var doctorQuery by remember { mutableStateOf("") }
-    var doctors by remember { mutableStateOf<List<Doctor>>(emptyList()) }
     var selectedDoctor by remember { mutableStateOf<Doctor?>(null) }
 
     var periods by remember { mutableStateOf<List<Periodo>>(emptyList()) }
@@ -363,17 +351,6 @@ private fun CaptureFormStep(
 
     var loading by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
-
-    // Autocomplete para médicos
-    LaunchedEffect(doctorQuery) {
-        if (doctorQuery.length < 2) {
-            doctors = emptyList()
-            return@LaunchedEffect
-        }
-        kotlinx.coroutines.delay(300)
-        runCatching { api.doctors(doctorQuery).bodyOrThrow().data }
-            .onSuccess { doctors = it }
-    }
 
     fun loadPeriods() {
         scope.launch {
@@ -470,8 +447,7 @@ private fun CaptureFormStep(
                                 )
                                 TextButton(onClick = {
                                     selectedDoctor = null
-                                    doctorQuery = ""
-                                    doctors = emptyList()
+                                    doctorSearchViewModel.clear()
                                 }) {
                                     Text("Cambiar médico")
                                 }
@@ -482,12 +458,12 @@ private fun CaptureFormStep(
 
                     // Búsqueda de médico
                     OutlinedTextField(
-                        value = doctorQuery,
+                        value = doctorUiState.query,
                         onValueChange = {
-                            doctorQuery = it
                             if (selectedDoctor != null && it != selectedDoctor!!.fullName) {
                                 selectedDoctor = null
                             }
+                            doctorSearchViewModel.onQueryChange(it)
                         },
                         label = { Text(if (selectedDoctor == null) "Buscar médico" else "Médico") },
                         modifier = Modifier.fillMaxWidth(),
@@ -495,47 +471,60 @@ private fun CaptureFormStep(
                     )
 
                     // Resultados de búsqueda
-                    if (doctorQuery.length >= 2 && selectedDoctor == null) {
-                        Spacer(Modifier.height(8.dp))
-                        if (doctors.isEmpty()) {
-                            Text(
-                                text = "No se encontraron médicos",
-                                style = MaterialTheme.typography.body2,
-                                color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f)
-                            )
-                        } else {
-                            doctors.forEach { doctor ->
-                                Card(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(vertical = 4.dp)
-                                        .clickable {
-                                            selectedDoctor = doctor
-                                            doctorQuery = doctor.fullName
-                                        },
-                                    backgroundColor = Verde.copy(alpha = 0.1f)
-                                ) {
-                                    Row(
-                                        modifier = Modifier.padding(12.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            Text(
-                                                text = doctor.numEmpleado,
-                                                style = MaterialTheme.typography.caption,
-                                                color = Verde
-                                            )
-                                            Text(
-                                                text = doctor.fullName,
-                                                style = MaterialTheme.typography.body1,
-                                                fontWeight = FontWeight.SemiBold
-                                            )
+                    if (selectedDoctor == null) {
+                        when (val result = doctorUiState.result) {
+                            DoctorSearchResultState.Idle -> Unit
+                            DoctorSearchResultState.Loading -> {
+                                Spacer(Modifier.height(8.dp))
+                                LoadingRow("Buscando médicos...")
+                            }
+                            is DoctorSearchResultState.Error -> {
+                                Spacer(Modifier.height(8.dp))
+                                ErrorCard(result.message)
+                            }
+                            is DoctorSearchResultState.Success -> {
+                                Spacer(Modifier.height(8.dp))
+                                if (result.doctors.isEmpty()) {
+                                    Text(
+                                        text = "No se encontraron médicos",
+                                        style = MaterialTheme.typography.body2,
+                                        color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f)
+                                    )
+                                } else {
+                                    result.doctors.forEach { doctor ->
+                                        Card(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 4.dp)
+                                                .clickable {
+                                                    selectedDoctor = doctor
+                                                    doctorSearchViewModel.showSelectedDoctor(doctor)
+                                                },
+                                            backgroundColor = Verde.copy(alpha = 0.1f)
+                                        ) {
+                                            Row(
+                                                modifier = Modifier.padding(12.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Column(modifier = Modifier.weight(1f)) {
+                                                    Text(
+                                                        text = doctor.numEmpleado,
+                                                        style = MaterialTheme.typography.caption,
+                                                        color = Verde
+                                                    )
+                                                    Text(
+                                                        text = doctor.fullName,
+                                                        style = MaterialTheme.typography.body1,
+                                                        fontWeight = FontWeight.SemiBold
+                                                    )
+                                                }
+                                                Icon(
+                                                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                                    contentDescription = "Seleccionar",
+                                                    tint = Verde
+                                                )
+                                            }
                                         }
-                                        Icon(
-                                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                                            contentDescription = "Seleccionar",
-                                            tint = Verde
-                                        )
                                     }
                                 }
                             }
