@@ -691,14 +691,24 @@ private fun CaptureSubmitCard(
     submitting: Boolean,
     onSubmit: () -> Unit
 ) {
-    Card(elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), shape = RoundedCornerShape(18.dp), modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text("Finalizar captura", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Text(
-                "Revisa la información antes de guardar. La incidencia se enviará al servidor.",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.68f)
-            )
+    Card(
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.72f)),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("Guardar incidencia", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
+                    Text(
+                        "Último paso: valida y envía al servidor.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                StatusPill("Final", Guinda)
+            }
             when (submitState) {
                 CaptureSubmitState.Idle -> Unit
                 CaptureSubmitState.Loading -> LoadingRow("Procesando...")
@@ -706,7 +716,7 @@ private fun CaptureSubmitCard(
                 is CaptureSubmitState.Success -> SuccessCard(submitState.message)
             }
             Button(onClick = onSubmit, enabled = !submitting, modifier = Modifier.fillMaxWidth()) {
-                Text(if (submitting) "Guardando..." else "Guardar incidencia")
+                Text(if (submitting) "Guardando..." else "Guardar incidencia", fontWeight = FontWeight.Black)
             }
         }
     }
@@ -739,47 +749,101 @@ private fun SearchBox(
 
 @Composable
 private fun EmployeeSelectCard(employee: Employee, onClick: () -> Unit) {
-    Card(elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), shape = RoundedCornerShape(22.dp), modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                StatusPill(employee.numEmpleado, Guinda)
-                employee.department?.code?.takeIf { it.isNotBlank() }?.let { StatusPill(it, Verde) }
+    Card(
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(CircleShape)
+                    .background(Guinda.copy(alpha = 0.12f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(employee.numEmpleado.takeLast(2).ifBlank { "#" }, color = Guinda, fontWeight = FontWeight.Black)
             }
-            Text(employee.fullName, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-            Text(employee.department?.description ?: "Sin departamento", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.70f))
-            if (employee.puesto.isNotBlank()) Text(employee.puesto, style = MaterialTheme.typography.bodyMedium)
-            Button(onClick = onClick, modifier = Modifier.fillMaxWidth()) { Text("Seleccionar empleado") }
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    StatusPill(employee.numEmpleado, Guinda)
+                    employee.department?.code?.takeIf { it.isNotBlank() }?.let { StatusPill(it, Verde) }
+                }
+                Text(employee.fullName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(employee.department?.description ?: "Sin departamento", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                if (employee.puesto.isNotBlank()) Text(employee.puesto, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+            Text("Elegir", color = Verde, fontWeight = FontWeight.Black, style = MaterialTheme.typography.labelMedium)
         }
     }
 }
 
 @Composable
 private fun CodeSelectCard(code: IncidenceCode, onClick: () -> Unit) {
-    Card(elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), shape = RoundedCornerShape(22.dp), modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                StatusPill(code.code, Oro)
-                if (code.isVacacional) StatusPill("Vacacional", Verde)
-                if (code.isIncapacidad) StatusPill("Incapacidad", Guinda)
+    Card(
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(46.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(Oro.copy(alpha = 0.14f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(code.code, color = Oro, fontWeight = FontWeight.Black, style = MaterialTheme.typography.titleMedium)
             }
-            Text(code.description, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-            Text("Requiere: ${requirementsSummary(code)}", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.72f))
-            Button(onClick = onClick, modifier = Modifier.fillMaxWidth()) { Text("Seleccionar codigo") }
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(code.description, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    if (code.isVacacional) StatusPill("Vacacional", Verde)
+                    if (code.isIncapacidad) StatusPill("Incapacidad", Guinda)
+                    StatusPill(requirementsSummary(code), Oro)
+                }
+            }
+            Text("Elegir", color = Verde, fontWeight = FontWeight.Black, style = MaterialTheme.typography.labelMedium)
         }
     }
 }
 
 @Composable
 private fun CaptureContextCard(employee: Employee, code: IncidenceCode) {
-    Card(elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), shape = RoundedCornerShape(22.dp), modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("Resumen", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
-            StatusPill("Empleado ${employee.numEmpleado}", Guinda)
-            Text(employee.fullName, fontWeight = FontWeight.Bold)
-            Text(employee.department?.description ?: "-", style = MaterialTheme.typography.labelSmall)
+    Card(
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f)),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text("Resumen de captura", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black)
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                StatusPill(employee.numEmpleado, Guinda)
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(employee.fullName, fontWeight = FontWeight.Black, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(employee.department?.description ?: "Sin departamento", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+            }
             HorizontalDivider()
-            StatusPill("Codigo ${code.code}", Oro)
-            Text(code.description, fontWeight = FontWeight.Bold)
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                StatusPill("Código ${code.code}", Oro)
+                Text(code.description, modifier = Modifier.weight(1f), fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            }
         }
     }
 }
@@ -819,35 +883,47 @@ private object ColumnScopeLike
 
 @Composable
 private fun CaptureStepper(current: Int) {
-    val steps = listOf("Empleado", "Codigo", "Datos")
-    Card(elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), shape = RoundedCornerShape(18.dp), modifier = Modifier.fillMaxWidth()) {
+    val steps = listOf("Empleado", "Código", "Datos")
+    Card(
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.50f)),
+        shape = RoundedCornerShape(18.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
         Row(
-            modifier = Modifier.padding(14.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.padding(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             steps.forEachIndexed { index, label ->
                 val stepNumber = index + 1
                 val active = stepNumber <= current
-                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Row(
+                    modifier = Modifier.weight(1f),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Box(
                         modifier = Modifier
-                            .size(34.dp)
+                            .size(28.dp)
                             .clip(CircleShape)
-                            .background(if (active) Guinda else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)),
+                            .background(if (active) Guinda else MaterialTheme.colorScheme.outlineVariant),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = stepNumber.toString(),
-                            color = if (active) Color.White else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
-                            fontWeight = FontWeight.Black
+                            color = if (active) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontWeight = FontWeight.Black,
+                            style = MaterialTheme.typography.labelSmall
                         )
                     }
                     Text(
                         label,
                         style = MaterialTheme.typography.labelSmall,
-                        color = if (active) Guinda else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
-                        fontWeight = if (active) FontWeight.Bold else FontWeight.Normal
+                        color = if (active) Guinda else MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontWeight = if (active) FontWeight.Black else FontWeight.Normal,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
             }

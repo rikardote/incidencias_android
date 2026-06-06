@@ -13,8 +13,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -38,8 +41,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
@@ -487,18 +492,39 @@ private fun EmployeeSearchScreen(
 
 @Composable
 private fun EmployeeCard(employee: Employee, onClick: () -> Unit) {
-    Card(elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), shape = MaterialTheme.shapes.large, modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
-                StatusPill(employee.numEmpleado, Guinda)
-                employee.department?.code?.takeIf { it.isNotBlank() }?.let { StatusPill(it, Verde) }
+    Card(
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        shape = RoundedCornerShape(20.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp))
+            .background(MaterialTheme.colorScheme.surface)
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(CircleShape)
+                    .background(Guinda.copy(alpha = 0.12f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(employee.numEmpleado.takeLast(2).ifBlank { "#" }, color = Guinda, fontWeight = FontWeight.Black)
             }
-            Text(employee.fullName, style = MaterialTheme.typography.titleLarge)
-            Text(employee.department?.description ?: "Sin departamento", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.72f))
-            if (employee.puesto.isNotBlank()) Text(employee.puesto, style = MaterialTheme.typography.bodyMedium)
-            val horario = listOf(employee.horario, employee.jornada).filter { it.isNotBlank() }.joinToString(" · ")
-            if (horario.isNotBlank()) Text(horario, style = MaterialTheme.typography.labelSmall)
-            Button(onClick = onClick, modifier = Modifier.fillMaxWidth()) { Text("Ver detalle") }
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    StatusPill(employee.numEmpleado, Guinda)
+                    employee.department?.code?.takeIf { it.isNotBlank() }?.let { StatusPill(it, Verde) }
+                }
+                Text(employee.fullName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(employee.department?.description ?: "Sin departamento", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                val horario = listOf(employee.horario, employee.jornada).filter { it.isNotBlank() }.joinToString(" · ")
+                if (horario.isNotBlank()) Text(horario, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+            Button(onClick = onClick) { Text("Detalle") }
         }
     }
 }

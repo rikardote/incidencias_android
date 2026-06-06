@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -38,6 +39,7 @@ import mx.gob.incidencias.android.data.model.Department
 import mx.gob.incidencias.android.data.model.IncidenceRecord
 import mx.gob.incidencias.android.data.model.Qna
 import mx.gob.incidencias.android.data.model.QnaSummary
+import mx.gob.incidencias.android.ui.components.HeroHeader
 import mx.gob.incidencias.android.ui.components.StatusPill
 import mx.gob.incidencias.android.ui.theme.Guinda
 import mx.gob.incidencias.android.ui.theme.Oro
@@ -140,7 +142,11 @@ fun ReportsScreen(
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         TextButton(onClick = onBack) { Text("← Menú") }
-        Text("Reportes", style = MaterialTheme.typography.headlineSmall)
+        HeroHeader(
+            title = "Reportes",
+            subtitle = "Consulta incidencias recientes y resúmenes por quincena",
+            icon = "📊"
+        )
 
         TabRow(selectedTabIndex = selectedTab.ordinal) {
             ReportsTab.values().forEach { tab ->
@@ -229,7 +235,12 @@ private fun IncidenceCompactRow(
     onCancelDelete: () -> Unit,
     onConfirmDelete: () -> Unit
 ) {
-    Card(elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), modifier = Modifier.fillMaxWidth()) {
+    Card(
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        modifier = Modifier.fillMaxWidth()
+    ) {
         Column(modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.weight(0.24f)) {
@@ -339,7 +350,12 @@ private fun CompactSelectedFilters(
     onReloadCatalogs: () -> Unit,
     loading: Boolean
 ) {
-    Card(elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), modifier = Modifier.fillMaxWidth()) {
+    Card(
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        modifier = Modifier.fillMaxWidth()
+    ) {
         Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.weight(1f)) {
@@ -406,7 +422,12 @@ private fun SummaryTotals(summary: List<QnaSummary>) {
 
 @Composable
 private fun SummaryCompactRow(row: QnaSummary) {
-    Card(elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), modifier = Modifier.fillMaxWidth()) {
+    Card(
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        modifier = Modifier.fillMaxWidth()
+    ) {
         Row(modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Column(modifier = Modifier.weight(0.20f)) {
                 Text(row.code, color = Guinda, fontWeight = FontWeight.Black, style = MaterialTheme.typography.titleMedium)

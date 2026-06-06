@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -39,6 +40,7 @@ import mx.gob.incidencias.android.data.model.AttendanceResponse
 import mx.gob.incidencias.android.data.model.BiometricRecord
 import mx.gob.incidencias.android.data.model.Employee
 import mx.gob.incidencias.android.ui.components.DatePickerField
+import mx.gob.incidencias.android.ui.components.HeroHeader
 import mx.gob.incidencias.android.ui.components.StatusPill
 import mx.gob.incidencias.android.ui.theme.Guinda
 import mx.gob.incidencias.android.ui.theme.Oro
@@ -123,7 +125,11 @@ fun FullBiometricScreen(api: ApiService, onBack: () -> Unit) {
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         TextButton(onClick = onBack) { Text("← Menú") }
-        Text("Biométrico", style = MaterialTheme.typography.headlineSmall)
+        HeroHeader(
+            title = "Biométrico",
+            subtitle = "Checadas recientes y asistencia por empleado",
+            icon = "🕐"
+        )
 
         TabRow(selectedTabIndex = selectedTab.ordinal) {
             BiometricTab.values().forEach { tab ->
@@ -195,7 +201,12 @@ private fun RecentBiometricTab(
 
 @Composable
 private fun BiometricCompactRow(record: BiometricRecord) {
-    Card(elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), modifier = Modifier.fillMaxWidth()) {
+    Card(
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        modifier = Modifier.fillMaxWidth()
+    ) {
         Row(
             modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -291,7 +302,12 @@ private fun CompactEmployeeSearchCard(
     onQueryChange: (String) -> Unit,
     onSearch: () -> Unit
 ) {
-    Card(elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), modifier = Modifier.fillMaxWidth()) {
+    Card(
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        modifier = Modifier.fillMaxWidth()
+    ) {
         Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             if (selectedEmployee == null) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
@@ -319,7 +335,12 @@ private fun CompactEmployeeSearchCard(
 
 @Composable
 private fun CompactEmployeeRow(employee: Employee, onClick: () -> Unit) {
-    Card(elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), modifier = Modifier.fillMaxWidth()) {
+    Card(
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        modifier = Modifier.fillMaxWidth()
+    ) {
         Row(modifier = Modifier.padding(10.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             StatusPill(employee.numEmpleado, Guinda)
             Column(modifier = Modifier.weight(1f)) {
@@ -341,7 +362,12 @@ private fun CompactRangeCard(
     onEndChange: (String) -> Unit,
     onLoadAttendance: () -> Unit
 ) {
-    Card(elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), modifier = Modifier.fillMaxWidth()) {
+    Card(
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        modifier = Modifier.fillMaxWidth()
+    ) {
         Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                 DatePickerField("Inicio", startDate, onStartChange, Modifier.weight(1f))
@@ -367,7 +393,12 @@ private fun AttendanceSummary(rows: List<AttendanceDay>) {
 
 @Composable
 private fun CompactAttendanceRow(day: AttendanceDay) {
-    Card(elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), modifier = Modifier.fillMaxWidth()) {
+    Card(
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        modifier = Modifier.fillMaxWidth()
+    ) {
         Row(
             modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
