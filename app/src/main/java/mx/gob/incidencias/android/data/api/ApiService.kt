@@ -40,10 +40,16 @@ interface ApiService {
     suspend fun employees(@Query("search") search: String): Response<ListResponse<Employee>>
 
     @GET("api/v1/incidence-codes")
-    suspend fun incidenceCodes(@Query("search") search: String? = null): Response<ListResponse<IncidenceCode>>
+    suspend fun incidenceCodes(
+        @Query("search") search: String? = null,
+        @Query("limit") limit: Int = 100
+    ): Response<ListResponse<IncidenceCode>>
 
     @GET("api/v1/doctors")
-    suspend fun doctors(@Query("search") search: String): Response<ListResponse<Doctor>>
+    suspend fun doctors(
+        @Query("search") search: String,
+        @Query("limit") limit: Int = 50
+    ): Response<ListResponse<Doctor>>
 
     @GET("api/v1/periodos")
     suspend fun periodos(): Response<ListResponse<Periodo>>
