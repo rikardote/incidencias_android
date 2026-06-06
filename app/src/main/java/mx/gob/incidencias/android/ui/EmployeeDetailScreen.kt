@@ -25,6 +25,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.google.gson.JsonElement
 import kotlinx.coroutines.launch
@@ -37,6 +39,10 @@ import mx.gob.incidencias.android.data.model.Employee
 import mx.gob.incidencias.android.data.model.EmployeeReport
 import mx.gob.incidencias.android.data.model.VacationResponse
 import mx.gob.incidencias.android.ui.components.DatePickerField
+import mx.gob.incidencias.android.ui.components.StatusPill
+import mx.gob.incidencias.android.ui.theme.Guinda
+import mx.gob.incidencias.android.ui.theme.Oro
+import mx.gob.incidencias.android.ui.theme.Verde
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -259,21 +265,9 @@ private fun IncidenciasTab(report: List<EmployeeReport>) {
         return
     }
 
-    LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        items(report) { record ->
-            Card(elevation = 2.dp, modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text("${record.codigo?.code.orEmpty()} - ${record.codigo?.description.orEmpty()}", style = MaterialTheme.typography.subtitle1)
-                    Text("${formatDate(record.fechaInicio)} a ${formatDate(record.fechaFinal)} · ${formatDias(record.totalDias)} días")
-                    val qna = qnaLabel(record.qna)
-                    if (qna.isNotBlank()) Text("QNA: $qna")
-                    val periodo = periodLabel(record.periodo)
-                    if (periodo.isNotBlank()) Text("Periodo: $periodo")
-                    val diagnostico = record.diagnostico.orEmpty()
-                    if (diagnostico.isNotBlank()) Text("Diagnóstico: $diagnostico")
-                }
-            }
-        }
+    LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        item { IncidenciasSummary(report) }
+        items(report) { record -> IncidenciaCompactRow(record) }
     }
 }
 
@@ -285,22 +279,9 @@ private fun AsistenciaTab(attendance: AttendanceResponse?) {
         return
     }
 
-    LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        items(rows) { day -> AttendanceCard(day) }
-    }
-}
-
-@Composable
-private fun AttendanceCard(day: AttendanceDay) {
-    Card(elevation = 2.dp, modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(formatDate(day.date), style = MaterialTheme.typography.subtitle1)
-            Text("Entrada: ${extractTime(day.primeraChecada)}")
-            Text("Salida: ${extractTime(day.ultimaChecada)}")
-            Text("Checadas: ${day.numChecadas}")
-            if (day.retardo) Text("Retardo", color = MaterialTheme.colors.error)
-            if (day.incidencias.isNotEmpty()) Text("Incidencias: ${day.incidencias.joinToString(", ")}")
-        }
+    LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        item { AttendanceSummary(rows) }
+        items(rows) { day -> AttendanceCompactRow(day) }
     }
 }
 
@@ -311,26 +292,84 @@ private fun VacacionesTab(vacations: VacationResponse?) {
         return
     }
 
-    LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        item {
-            Card(elevation = 2.dp, modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text("Resumen de vacaciones", style = MaterialTheme.typography.h6)
-                    Text("Derecho por periodo: ${formatDias(vacations.entitlement)} días")
-                    Text("Total pendiente: ${formatDias(vacations.totalPending)} días")
-                }
-            }
-        }
+    LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        item { VacationSummary(vacations) }
         items(vacations.periods) { period ->
-            Card(elevation = 2.dp, modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(period.period.label.orEmpty().ifBlank { "Periodo ${period.period.period}/${period.period.year}" }, style = MaterialTheme.typography.subtitle1)
-                    Text("Derecho: ${formatDias(period.entitlement)}")
-                    Text("Usados: ${formatDias(period.used)}")
-                    Text("Pendientes: ${formatDias(period.pending)}")
+            Card(elevation = 1.dp, modifier = Modifier.fillMaxWidth()) {
+                Row(modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Column(modifier = Modifier.weight(0.42f)) {
+                        Text(period.period.label.orEmpty().ifBlank { "${period.period.period}/${period.period.year}" }, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text("Derecho ${formatDias(period.entitlement)} d", style = MaterialTheme.typography.caption)
+                    }
+                    StatusPill("Usados ${formatDias(period.used)}", Oro, modifier = Modifier.weight(0.28f))
+                    StatusPill("Pend. ${formatDias(period.pending)}", if (period.pending > 0) Verde else Guinda, modifier = Modifier.weight(0.30f))
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun IncidenciasSummary(report: List<EmployeeReport>) {
+    val dias = report.sumOf { it.totalDias }
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+        StatusPill("${report.size} incidencias", Verde)
+        StatusPill("${formatDias(dias)} días", Oro)
+    }
+}
+
+@Composable
+private fun IncidenciaCompactRow(record: EmployeeReport) {
+    val qna = qnaLabel(record.qna)
+    val periodo = periodLabel(record.periodo)
+    Card(elevation = 1.dp, modifier = Modifier.fillMaxWidth()) {
+        Row(modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Column(modifier = Modifier.weight(0.22f)) {
+                Text(record.codigo?.code.orEmpty().ifBlank { "—" }, color = Guinda, fontWeight = FontWeight.Black, style = MaterialTheme.typography.subtitle1)
+                Text(formatDateShort(record.fechaInicio), style = MaterialTheme.typography.caption)
+            }
+            Column(modifier = Modifier.weight(0.58f)) {
+                Text(record.codigo?.description.orEmpty(), fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(listOf(qna, periodo).filter { it.isNotBlank() }.joinToString(" · ").ifBlank { "Sin periodo/QNA" }, style = MaterialTheme.typography.caption, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+            StatusPill("${formatDias(record.totalDias)} d", Oro, modifier = Modifier.weight(0.20f))
+        }
+    }
+}
+
+@Composable
+private fun AttendanceSummary(rows: List<AttendanceDay>) {
+    val retardos = rows.count { it.retardo }
+    val incidencias = rows.count { it.incidencias.isNotEmpty() }
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+        StatusPill("${rows.size} días", Verde)
+        StatusPill("$retardos retardos", if (retardos > 0) Guinda else Verde)
+        StatusPill("$incidencias incid.", Oro)
+    }
+}
+
+@Composable
+private fun AttendanceCompactRow(day: AttendanceDay) {
+    Card(elevation = 1.dp, modifier = Modifier.fillMaxWidth()) {
+        Row(modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Column(modifier = Modifier.weight(0.24f)) {
+                Text(formatDateShort(day.date), color = Guinda, fontWeight = FontWeight.Black)
+                Text("${day.numChecadas} chec.", style = MaterialTheme.typography.caption)
+            }
+            Column(modifier = Modifier.weight(0.56f)) {
+                Text("${extractTime(day.primeraChecada)} → ${extractTime(day.ultimaChecada)}", fontWeight = FontWeight.Bold)
+                Text(day.incidencias.joinToString(", ").ifBlank { "Sin incidencias" }, style = MaterialTheme.typography.caption, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+            StatusPill(if (day.retardo) "Ret." else "OK", if (day.retardo) Guinda else Verde, modifier = Modifier.weight(0.20f))
+        }
+    }
+}
+
+@Composable
+private fun VacationSummary(vacations: VacationResponse) {
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+        StatusPill("Derecho ${formatDias(vacations.entitlement)} d", Oro)
+        StatusPill("Pend. ${formatDias(vacations.totalPending)} d", if (vacations.totalPending > 0) Verde else Guinda)
     }
 }
 
