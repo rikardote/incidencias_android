@@ -31,6 +31,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -47,14 +49,17 @@ import mx.gob.incidencias.android.data.model.Employee
 import mx.gob.incidencias.android.data.model.IncidenceCode
 import mx.gob.incidencias.android.data.model.Periodo
 import mx.gob.incidencias.android.data.model.StoreIncidenciaRequest
+import mx.gob.incidencias.android.data.repository.IncidenciasRepository
 import mx.gob.incidencias.android.ui.components.DatePickerField
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import mx.gob.incidencias.android.ui.components.HeroHeader
 import mx.gob.incidencias.android.ui.components.StatusPill
 import mx.gob.incidencias.android.ui.theme.Guinda
 import mx.gob.incidencias.android.ui.theme.Oro
 import mx.gob.incidencias.android.ui.theme.Verde
+import mx.gob.incidencias.android.ui.viewmodel.EmployeeSearchResultState
+import mx.gob.incidencias.android.ui.viewmodel.EmployeeSearchViewModel
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -143,26 +148,12 @@ private fun CaptureEmployeeStep(
     onBack: () -> Unit,
     onSelected: (Employee) -> Unit
 ) {
-    val scope = rememberCoroutineScope()
-    var query by remember { mutableStateOf("") }
-    var loading by remember { mutableStateOf(false) }
-    var error by remember { mutableStateOf<String?>(null) }
-    var results by remember { mutableStateOf<List<Employee>>(emptyList()) }
-
-    LaunchedEffect(query) {
-        if (query.length < 2) {
-            results = emptyList()
-            error = null
-            return@LaunchedEffect
-        }
-        kotlinx.coroutines.delay(300)
-        loading = true
-        error = null
-        runCatching { api.employees(query).bodyOrThrow().data }
-            .onSuccess { results = it }
-            .onFailure { error = it.userMessage() }
-        loading = false
-    }
+    val repository = remember(api) { IncidenciasRepository(api) }
+    val searchViewModel: EmployeeSearchViewModel = viewModel(
+        key = "capture_employee_search",
+        factory = EmployeeSearchViewModel.factory(repository)
+    )
+    val uiState by searchViewModel.uiState.collectAsStateWithLifecycle()
 
     LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         item { TextButton(onClick = onBack) { Text("<- Menu") } }
@@ -178,8 +169,8 @@ private fun CaptureEmployeeStep(
             Card(modifier = Modifier.fillMaxWidth(), elevation = 2.dp) {
                 Column(modifier = Modifier.padding(12.dp)) {
                     OutlinedTextField(
-                        value = query,
-                        onValueChange = { query = it },
+                        value = uiState.query,
+                        onValueChange = searchViewModel::onQueryChange,
                         label = { Text("Numero o nombre del empleado") },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true
@@ -187,38 +178,39 @@ private fun CaptureEmployeeStep(
                 }
             }
         }
-        error?.let { item { ErrorCard(it) } }
-        if (loading) item { LoadingRow("Buscando...") }
-        if (!loading && query.length >= 2) {
-            item {
-                Text(
-                    text = "${results.size} coincidencia(s)",
-                    style = MaterialTheme.typography.subtitle2,
-                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 8.dp)
-                )
-            }
-            if (results.isEmpty()) {
-                item {
-                    Card(modifier = Modifier.fillMaxWidth(), backgroundColor = Oro.copy(alpha = 0.1f)) {
-                        Text(
-                            text = "No se encontraron empleados que coincidan con '$query'",
-                            modifier = Modifier.padding(16.dp),
-                            color = Oro
-                        )
-                    }
-                }
-            } else {
-                items(results, key = { it.id }) { EmployeeSelectCard(employee = it, onClick = { onSelected(it) }) }
-            }
-        }
-        if (!loading && query.length < 2) {
-            item {
+
+        when (val result = uiState.result) {
+            EmployeeSearchResultState.Idle -> item {
                 Text(
                     text = "Escribe para buscar",
                     style = MaterialTheme.typography.caption,
                     color = MaterialTheme.colors.onSurface.copy(alpha = 0.5f),
                     modifier = Modifier.padding(horizontal = 4.dp, vertical = 8.dp)
                 )
+            }
+            EmployeeSearchResultState.Loading -> item { LoadingRow("Buscando...") }
+            is EmployeeSearchResultState.Error -> item { ErrorCard(result.message) }
+            is EmployeeSearchResultState.Success -> {
+                item {
+                    Text(
+                        text = "${result.employees.size} coincidencia(s)",
+                        style = MaterialTheme.typography.subtitle2,
+                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 8.dp)
+                    )
+                }
+                if (result.employees.isEmpty()) {
+                    item {
+                        Card(modifier = Modifier.fillMaxWidth(), backgroundColor = Oro.copy(alpha = 0.1f)) {
+                            Text(
+                                text = "No se encontraron empleados que coincidan con '${uiState.query}'",
+                                modifier = Modifier.padding(16.dp),
+                                color = Oro
+                            )
+                        }
+                    }
+                } else {
+                    items(result.employees, key = { it.id }) { EmployeeSelectCard(employee = it, onClick = { onSelected(it) }) }
+                }
             }
         }
     }
@@ -540,7 +532,7 @@ private fun CaptureFormStep(
                                             )
                                         }
                                         Icon(
-                                            imageVector = Icons.Default.ArrowForward,
+                                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                                             contentDescription = "Seleccionar",
                                             tint = Verde
                                         )
