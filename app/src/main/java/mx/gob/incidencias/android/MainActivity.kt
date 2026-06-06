@@ -322,48 +322,85 @@ private fun EmployeeSearchScreen(
     var error by remember { mutableStateOf<String?>(null) }
     var employees by remember { mutableStateOf<List<Employee>>(emptyList()) }
 
-    fun search() {
-        scope.launch {
-            loading = true
+    LaunchedEffect(query) {
+        if (query.length < 2) {
+            employees = emptyList()
             error = null
-            runCatching { api.employees(query).bodyOrThrow().data }
-                .onSuccess { employees = it }
-                .onFailure { error = it.userMessage() }
-            loading = false
+            return@LaunchedEffect
         }
+        kotlinx.coroutines.delay(300)
+        loading = true
+        error = null
+        runCatching { api.employees(query).bodyOrThrow().data }
+            .onSuccess { employees = it }
+            .onFailure { error = it.userMessage() }
+        loading = false
     }
 
-    LazyColumn(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        item { TextButton(onClick = onBack) { Text("← Menú") } }
+    LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        item { TextButton(onClick = onBack) { Text("<- Menu") } }
         item {
             HeroHeader(
                 title = "Buscar empleados",
-                subtitle = "Consulta integral por número, nombre o apellidos",
-                icon = "🔎"
+                subtitle = "Escribe numero, nombre o apellidos",
+                icon = "🔍"
             )
         }
         item {
-            SectionCard(title = "Parámetros de búsqueda", subtitle = "Ingresa al menos un dato del empleado") {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Card(modifier = Modifier.fillMaxWidth(), elevation = 2.dp) {
+                Column(modifier = Modifier.padding(12.dp)) {
                     OutlinedTextField(
                         value = query,
                         onValueChange = { query = it },
-                        label = { Text("Nombre o número") },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
+                        label = { Text("Numero o nombre del empleado") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
                     )
-                    Button(enabled = query.isNotBlank() && !loading, onClick = ::search, modifier = Modifier.fillMaxWidth()) {
-                        Text("Buscar")
+                }
+            }
+        }
+        error?.let { item { ErrorCard(it) } }
+        if (loading) item { LoadingScreen("Buscando...") }
+        if (!loading && query.length >= 2) {
+            item {
+                Text(
+                    text = "${employees.size} coincidencia(s)",
+                    style = MaterialTheme.typography.subtitle2,
+                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 8.dp)
+                )
+            }
+            if (employees.isEmpty()) {
+                item {
+                    Card(modifier = Modifier.fillMaxWidth(), backgroundColor = Oro.copy(alpha = 0.1f)) {
+                        Text(
+                            text = "No se encontraron empleados que coincidan con '$query'",
+                            modifier = Modifier.padding(16.dp),
+                            color = Oro
+                        )
+                    }
+                }
+            } else {
+                items(employees) { EmployeeCard(it, onClick = { onEmployeeSelected(it) }) }
+            }
+        }
+        if (!loading && query.length < 2) {
+            item {
+                Card(modifier = Modifier.fillMaxWidth(), backgroundColor = Guinda.copy(alpha = 0.05f)) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = "Escribe al menos 2 caracteres",
+                            style = MaterialTheme.typography.h6,
+                            color = Guinda
+                        )
+                        Text(
+                            text = "Por ejemplo: numero de empleado, nombre o apellidos",
+                            style = MaterialTheme.typography.body2,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
                     }
                 }
             }
         }
-        if (loading) item { LoadingScreen("Buscando...") }
-        error?.let { item { ErrorCard(it) } }
-        if (employees.isNotEmpty()) {
-            item { Text("${employees.size} resultado(s)", style = MaterialTheme.typography.subtitle1) }
-        }
-        items(employees) { EmployeeCard(it, onClick = { onEmployeeSelected(it) }) }
     }
 }
 

@@ -145,18 +145,22 @@ private fun CaptureEmployeeStep(
     var error by remember { mutableStateOf<String?>(null) }
     var results by remember { mutableStateOf<List<Employee>>(emptyList()) }
 
-    fun search() {
-        scope.launch {
-            loading = true
+    LaunchedEffect(query) {
+        if (query.length < 2) {
+            results = emptyList()
             error = null
-            runCatching { api.employees(query).bodyOrThrow().data }
-                .onSuccess { results = it }
-                .onFailure { error = it.userMessage() }
-            loading = false
+            return@LaunchedEffect
         }
+        kotlinx.coroutines.delay(300)
+        loading = true
+        error = null
+        runCatching { api.employees(query).bodyOrThrow().data }
+            .onSuccess { results = it }
+            .onFailure { error = it.userMessage() }
+        loading = false
     }
 
-    LazyColumn(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+    LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         item { TextButton(onClick = onBack) { Text("<- Menu") } }
         item {
             HeroHeader(
@@ -167,22 +171,59 @@ private fun CaptureEmployeeStep(
         }
         item { CaptureStepper(current = 1) }
         item {
-            CaptureSectionCard(title = "Empleado", subtitle = "Busca por numero, nombre o apellidos") {
-                SearchBox(
-                    value = query,
-                    onValueChange = { query = it },
-                    label = "Nombre o numero de empleado",
-                    buttonText = "Buscar empleado",
-                    loading = loading,
-                    onSearch = ::search
-                )
+            Card(modifier = Modifier.fillMaxWidth(), elevation = 2.dp) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    OutlinedTextField(
+                        value = query,
+                        onValueChange = { query = it },
+                        label = { Text("Numero o nombre del empleado") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+                }
             }
         }
         error?.let { item { ErrorCard(it) } }
-        if (loading) item { LoadingRow("Buscando empleados...") }
-        if (results.isNotEmpty()) item { Text("${results.size} resultado(s)", style = MaterialTheme.typography.subtitle1) }
-        items(results) { employee ->
-            EmployeeSelectCard(employee = employee, onClick = { onSelected(employee) })
+        if (loading) item { LoadingRow("Buscando...") }
+        if (!loading && query.length >= 2) {
+            item {
+                Text(
+                    text = "${results.size} coincidencia(s)",
+                    style = MaterialTheme.typography.subtitle2,
+                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 8.dp)
+                )
+            }
+            if (results.isEmpty()) {
+                item {
+                    Card(modifier = Modifier.fillMaxWidth(), backgroundColor = Oro.copy(alpha = 0.1f)) {
+                        Text(
+                            text = "No se encontraron empleados que coincidan con '$query'",
+                            modifier = Modifier.padding(16.dp),
+                            color = Oro
+                        )
+                    }
+                }
+            } else {
+                items(results) { EmployeeSelectCard(employee = it, onClick = { onSelected(it) }) }
+            }
+        }
+        if (!loading && query.length < 2) {
+            item {
+                Card(modifier = Modifier.fillMaxWidth(), backgroundColor = Guinda.copy(alpha = 0.05f)) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = "Escribe al menos 2 caracteres",
+                            style = MaterialTheme.typography.h6,
+                            color = Guinda
+                        )
+                        Text(
+                            text = "Por ejemplo: numero de empleado, nombre o apellidos",
+                            style = MaterialTheme.typography.body2,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                    }
+                }
+            }
         }
     }
 }
