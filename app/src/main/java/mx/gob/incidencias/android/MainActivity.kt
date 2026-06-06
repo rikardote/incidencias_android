@@ -3,7 +3,9 @@ package mx.gob.incidencias.android
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -50,6 +52,14 @@ import mx.gob.incidencias.android.ui.CaptureScreen
 import mx.gob.incidencias.android.ui.EmployeeDetailScreen
 import mx.gob.incidencias.android.ui.FullBiometricScreen
 import mx.gob.incidencias.android.ui.ReportsScreen
+import mx.gob.incidencias.android.ui.components.ActionCard
+import mx.gob.incidencias.android.ui.components.HeroHeader
+import mx.gob.incidencias.android.ui.components.SectionCard
+import mx.gob.incidencias.android.ui.components.StatusPill
+import mx.gob.incidencias.android.ui.theme.Guinda
+import mx.gob.incidencias.android.ui.theme.Oro
+import mx.gob.incidencias.android.ui.theme.Verde
+import mx.gob.incidencias.android.ui.theme.VerdeDark
 import mx.gob.incidencias.android.ui.theme.IncidenciasTheme
 
 class MainActivity : ComponentActivity() {
@@ -109,9 +119,11 @@ private fun IncidenciasApp(session: SessionStore) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Incidencias") },
+                title = { Text("Incidencias", color = androidx.compose.ui.graphics.Color.White) },
+                backgroundColor = Guinda,
+                elevation = 8.dp,
                 actions = {
-                    user?.let { Text(it.name, modifier = Modifier.padding(end = 12.dp)) }
+                    user?.let { Text(it.name, color = androidx.compose.ui.graphics.Color.White, modifier = Modifier.padding(end = 12.dp)) }
                 }
             )
         }
@@ -119,6 +131,7 @@ private fun IncidenciasApp(session: SessionStore) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .background(MaterialTheme.colors.background)
                 .padding(padding)
                 .padding(16.dp)
         ) {
@@ -198,40 +211,54 @@ private fun LoginScreen(
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text("Iniciar sesión", style = MaterialTheme.typography.h5)
-        Text("Usa la misma cuenta del sistema de incidencias.")
-        OutlinedTextField(
-            value = apiUrl,
-            onValueChange = { apiUrl = it },
-            label = { Text("URL API") },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth()
-        )
-        OutlinedTextField(
-            value = username,
-            onValueChange = { username = it },
-            label = { Text("Usuario") },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth()
-        )
-        OutlinedTextField(
-            value = password,
-            onValueChange = { password = it },
-            label = { Text("Contraseña") },
-            singleLine = true,
-            visualTransformation = PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-            modifier = Modifier.fillMaxWidth()
-        )
-        Button(
-            enabled = apiUrl.isNotBlank() && username.isNotBlank() && password.isNotBlank(),
-            onClick = { onLogin(apiUrl, username, password) },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Entrar")
+    LazyColumn(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        item {
+            HeroHeader(
+                title = "Sistema de Incidencias",
+                subtitle = "Acceso móvil seguro para captura y consulta",
+                icon = "🏛️"
+            )
         }
-        Text("Emulador: http://10.0.2.2:8190/", style = MaterialTheme.typography.caption)
+        item {
+            SectionCard(
+                title = "Iniciar sesión",
+                subtitle = "Usa la misma cuenta del sistema web"
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedTextField(
+                        value = apiUrl,
+                        onValueChange = { apiUrl = it },
+                        label = { Text("URL API") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = username,
+                        onValueChange = { username = it },
+                        label = { Text("Usuario") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = password,
+                        onValueChange = { password = it },
+                        label = { Text("Contraseña") },
+                        singleLine = true,
+                        visualTransformation = PasswordVisualTransformation(),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Button(
+                        enabled = apiUrl.isNotBlank() && username.isNotBlank() && password.isNotBlank(),
+                        onClick = { onLogin(apiUrl, username, password) },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Entrar")
+                    }
+                    Text("Emulador: http://10.0.2.2:8190/", style = MaterialTheme.typography.caption)
+                }
+            }
+        }
     }
 }
 
@@ -244,23 +271,41 @@ private fun MenuScreen(
     onBiometric: () -> Unit,
     onLogout: () -> Unit
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text("Menú principal", style = MaterialTheme.typography.h5)
-        Text("Usuario: ${user?.name.orEmpty()} (${user?.type.orEmpty()})")
-        if (user?.canCapture == true) {
-            Text("Captura habilitada", color = MaterialTheme.colors.secondary)
-        } else {
-            Text("Solo consulta", color = MaterialTheme.colors.onSurface.copy(alpha = 0.7f))
+    LazyColumn(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        item {
+            HeroHeader(
+                title = "Bienvenido",
+                subtitle = "${user?.name.orEmpty()} · ${user?.type.orEmpty()}",
+                icon = "👋"
+            )
         }
-
-        MenuButton("Buscar empleados", "Consulta por número o nombre", onEmployees)
-        if (user?.canCapture == true) {
-            MenuButton("Capturar incidencia", "Registro guiado con formularios dinámicos", onCapture)
+        item {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (user?.canCapture == true) {
+                    StatusPill("Captura habilitada", Verde)
+                } else {
+                    StatusPill("Solo consulta", Oro)
+                }
+            }
         }
-        MenuButton("Incidencias recientes", "Últimos registros capturados", onReports)
-        MenuButton("Biométrico", "Checadas recientes", onBiometric)
-        TextButton(onClick = onLogout, modifier = Modifier.fillMaxWidth()) {
-            Text("Cerrar sesión")
+        item {
+            ActionCard("Buscar empleados", "Consulta expediente, asistencia e incidencias", "👤", VerdeDark, onEmployees)
+        }
+        if (user?.canCapture == true) {
+            item {
+                ActionCard("Capturar incidencia", "Registro guiado con formularios dinámicos", "📝", Guinda, onCapture)
+            }
+        }
+        item {
+            ActionCard("Reportes", "Recientes y resumen por quincena", "📊", Oro, onReports)
+        }
+        item {
+            ActionCard("Biométrico", "Checadas recientes y asistencia por empleado", "🕐", Verde, onBiometric)
+        }
+        item {
+            TextButton(onClick = onLogout, modifier = Modifier.fillMaxWidth()) {
+                Text("Cerrar sesión")
+            }
         }
     }
 }
@@ -300,39 +345,53 @@ private fun EmployeeSearchScreen(
         }
     }
 
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            TextButton(onClick = onBack) { Text("← Menú") }
+    LazyColumn(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        item { TextButton(onClick = onBack) { Text("← Menú") } }
+        item {
+            HeroHeader(
+                title = "Buscar empleados",
+                subtitle = "Consulta integral por número, nombre o apellidos",
+                icon = "🔎"
+            )
         }
-        Text("Buscar empleados", style = MaterialTheme.typography.h5)
-        OutlinedTextField(
-            value = query,
-            onValueChange = { query = it },
-            label = { Text("Nombre o número") },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth()
-        )
-        Button(enabled = query.isNotBlank() && !loading, onClick = ::search, modifier = Modifier.fillMaxWidth()) {
-            Text("Buscar")
+        item {
+            SectionCard(title = "Parámetros de búsqueda", subtitle = "Ingresa al menos un dato del empleado") {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    OutlinedTextField(
+                        value = query,
+                        onValueChange = { query = it },
+                        label = { Text("Nombre o número") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Button(enabled = query.isNotBlank() && !loading, onClick = ::search, modifier = Modifier.fillMaxWidth()) {
+                        Text("Buscar")
+                    }
+                }
+            }
         }
-        if (loading) LoadingScreen("Buscando...")
-        error?.let { ErrorCard(it) }
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(employees) { EmployeeCard(it, onClick = { onEmployeeSelected(it) }) }
+        if (loading) item { LoadingScreen("Buscando...") }
+        error?.let { item { ErrorCard(it) } }
+        if (employees.isNotEmpty()) {
+            item { Text("${employees.size} resultado(s)", style = MaterialTheme.typography.subtitle1) }
         }
+        items(employees) { EmployeeCard(it, onClick = { onEmployeeSelected(it) }) }
     }
 }
 
 @Composable
 private fun EmployeeCard(employee: Employee, onClick: () -> Unit) {
-    Card(elevation = 2.dp, modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            Text("${employee.numEmpleado} - ${employee.fullName}", style = MaterialTheme.typography.subtitle1)
-            Text(employee.department?.description ?: "Sin departamento")
+    Card(elevation = 5.dp, shape = MaterialTheme.shapes.large, modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
+                StatusPill(employee.numEmpleado, Guinda)
+                employee.department?.code?.takeIf { it.isNotBlank() }?.let { StatusPill(it, Verde) }
+            }
+            Text(employee.fullName, style = MaterialTheme.typography.h6)
+            Text(employee.department?.description ?: "Sin departamento", color = MaterialTheme.colors.onSurface.copy(alpha = 0.72f))
             if (employee.puesto.isNotBlank()) Text(employee.puesto, style = MaterialTheme.typography.body2)
             val horario = listOf(employee.horario, employee.jornada).filter { it.isNotBlank() }.joinToString(" · ")
             if (horario.isNotBlank()) Text(horario, style = MaterialTheme.typography.caption)
-            Spacer(Modifier.height(8.dp))
             Button(onClick = onClick, modifier = Modifier.fillMaxWidth()) { Text("Ver detalle") }
         }
     }
