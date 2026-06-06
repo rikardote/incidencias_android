@@ -18,6 +18,7 @@ import androidx.compose.material.Button
 import androidx.compose.material.Card
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Divider
+import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
@@ -34,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import mx.gob.incidencias.android.data.api.ApiException
@@ -108,7 +110,7 @@ fun CaptureScreen(api: ApiService, onBackToMenu: () -> Unit) {
                 HeroHeader(
                     title = "Incidencia capturada",
                     subtitle = "El registro fue enviado y validado por el servidor",
-                    icon = "✅"
+                    icon = "OK"
                 )
             }
             item { SuccessCard(successMessage.ifBlank { "Incidencia capturada correctamente" }) }
@@ -125,11 +127,10 @@ fun CaptureScreen(api: ApiService, onBackToMenu: () -> Unit) {
                     modifier = Modifier.fillMaxWidth()
                 ) { Text("Capturar otra") }
             }
-            item { TextButton(onClick = onBackToMenu, modifier = Modifier.fillMaxWidth()) { Text("Volver al menú") } }
+            item { TextButton(onClick = onBackToMenu, modifier = Modifier.fillMaxWidth()) { Text("Volver al menu") } }
         }
     }
 
-    // Keep scope referenced for Compose compiler stability in older plugin combinations.
     @Suppress("UNUSED_VARIABLE") val unused = scope
 }
 
@@ -157,21 +158,21 @@ private fun CaptureEmployeeStep(
     }
 
     LazyColumn(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        item { TextButton(onClick = onBack) { Text("← Menú") } }
+        item { TextButton(onClick = onBack) { Text("<- Menu") } }
         item {
             HeroHeader(
                 title = "Nueva incidencia",
-                subtitle = "Selecciona empleado, código y completa la captura",
-                icon = "📝"
+                subtitle = "Selecciona empleado, codigo y completa la captura",
+                icon = "N"
             )
         }
         item { CaptureStepper(current = 1) }
         item {
-            CaptureSectionCard(title = "Empleado", subtitle = "Busca por número, nombre o apellidos") {
+            CaptureSectionCard(title = "Empleado", subtitle = "Busca por numero, nombre o apellidos") {
                 SearchBox(
                     value = query,
                     onValueChange = { query = it },
-                    label = "Nombre o número de empleado",
+                    label = "Nombre o numero de empleado",
                     buttonText = "Buscar empleado",
                     loading = loading,
                     onSearch = ::search
@@ -195,11 +196,10 @@ private fun CaptureCodeStep(
     onSelected: (IncidenceCode) -> Unit
 ) {
     val scope = rememberCoroutineScope()
-    var query by remember { mutableStateOf("") }
     var loading by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     var results by remember { mutableStateOf<List<IncidenceCode>>(emptyList()) }
-    var category by remember { mutableStateOf("Todos") }
+    var category by remember { mutableStateOf<String?>(null) }
 
     fun loadAllCodes() {
         scope.launch {
@@ -214,58 +214,119 @@ private fun CaptureCodeStep(
 
     LaunchedEffect(Unit) { loadAllCodes() }
 
-    val filteredCodes = results.filter { code ->
-        val text = query.trim()
-        val matchesText = text.isBlank() ||
-            code.code.contains(text, ignoreCase = true) ||
-            code.description.contains(text, ignoreCase = true)
-        val matchesCategory = when (category) {
-            "Vacaciones" -> code.requiresPeriod() || code.isVacacional
-            "Incapacidad" -> code.requiresIncapacityDetails()
-            "Rango" -> code.requiresDateRange()
-            "TXT" -> code.requiresTxtFields()
-            else -> true
+    val displayCodes = category?.let { cat ->
+        results.filter { code ->
+            when (cat) {
+                "Vacaciones" -> code.requiresPeriod() || code.isVacacional
+                "Incapacidad" -> code.requiresIncapacidadDetails()
+                "Rango" -> code.requiresDateRange()
+                "TXT" -> code.requiresTxtFields()
+                else -> true
+            }
         }
-        matchesText && matchesCategory
-    }
+    } ?: results
 
-    LazyColumn(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        item { TextButton(onClick = onBack) { Text("← Empleado") } }
+    LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        item { TextButton(onClick = onBack) { Text("<- Menu") } }
         item {
             HeroHeader(
-                title = "Código de incidencia",
+                title = "Codigo de incidencia",
                 subtitle = employee?.fullName ?: "Elige el tipo de incidencia",
-                icon = "🏷️"
+                icon = "#"
             )
         }
         item { CaptureStepper(current = 2) }
         item { employee?.let { SelectedEmployeeSummary(it) } }
+
+        // Botones de categoria grandes
         item {
-            CaptureSectionCard(
-                title = "Selecciona un código",
-                subtitle = "Ya no necesitas capturar el código: toca una opción de la lista"
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                OutlinedTextField(
-                    value = query,
-                    onValueChange = { query = it },
-                    label = { Text("Filtrar por código o descripción") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(Modifier.height(8.dp))
-                CodeCategorySelector(selected = category, onSelected = { category = it })
-                Spacer(Modifier.height(8.dp))
-                Button(onClick = ::loadAllCodes, enabled = !loading, modifier = Modifier.fillMaxWidth()) {
-                    Text("Actualizar catálogo")
+                listOf(
+                    "Vacaciones" to "V",
+                    "Incapacidad" to "I",
+                    "Rango" to "R",
+                    "TXT" to "T"
+                ).forEach { (cat, abbr) ->
+                    val count = results.count { code ->
+                        when (cat) {
+                            "Vacaciones" -> code.requiresPeriod() || code.isVacacional
+                            "Incapacidad" -> code.requiresIncapacidadDetails()
+                            "Rango" -> code.requiresDateRange()
+                            "TXT" -> code.requiresTxtFields()
+                            else -> true
+                        }
+                    }
+                    CategoryButton(
+                        label = cat,
+                        abbr = abbr,
+                        count = count,
+                        selected = category == cat,
+                        onClick = {
+                            category = if (category == cat) null else cat
+                        },
+                        modifier = Modifier.weight(1f)
+                    )
                 }
             }
         }
+
         error?.let { item { ErrorCard(it) } }
-        if (loading) item { LoadingRow("Cargando catálogo de códigos...") }
+        if (loading) item { LoadingRow("Cargando...") }
         if (!loading) {
-            item { Text("${filteredCodes.size} código(s) disponibles", style = MaterialTheme.typography.subtitle1) }
+            item {
+                Text(
+                    text = if (category != null) "$category: ${displayCodes.size} codigo(s)" else "Todos: ${displayCodes.size} codigo(s)",
+                    style = MaterialTheme.typography.subtitle1,
+                    modifier = Modifier.padding(horizontal = 4.dp)
+                )
+            }
+            items(displayCodes) { code ->
+                CodeSelectCard(code = code, onClick = { onSelected(code) })
+            }
         }
-        items(filteredCodes) { code -> CodeSelectCard(code = code, onClick = { onSelected(code) }) }
+    }
+}
+
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+private fun CategoryButton(
+    label: String,
+    abbr: String,
+    count: Int,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val bgColor = if (selected) Guinda else Guinda.copy(alpha = 0.1f)
+    val textColor = if (selected) Color.White else Guinda
+
+    Card(
+        modifier = modifier,
+        elevation = if (selected) 4.dp else 0.dp,
+        backgroundColor = bgColor,
+        onClick = onClick
+    ) {
+        Column(
+            modifier = Modifier.padding(vertical = 12.dp, horizontal = 4.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(abbr, style = MaterialTheme.typography.h6, fontWeight = FontWeight.Bold, color = textColor)
+            Spacer(Modifier.height(2.dp))
+            Text(
+                text = label,
+                style = MaterialTheme.typography.caption,
+                fontWeight = FontWeight.Bold,
+                color = textColor
+            )
+            Text(
+                text = "$count",
+                style = MaterialTheme.typography.caption,
+                color = textColor.copy(alpha = 0.7f)
+            )
+        }
     }
 }
 
@@ -279,12 +340,12 @@ private fun CaptureFormStep(
 ) {
     val scope = rememberCoroutineScope()
     if (employee == null || code == null) {
-        ErrorCard("Falta seleccionar empleado o código")
+        ErrorCard("Falta seleccionar empleado o codigo")
         return
     }
 
     val requiresRange = remember(code) { code.requiresDateRange() }
-    val requiresIncapacity = remember(code) { code.requiresIncapacityDetails() }
+    val requiresIncapacity = remember(code) { code.requiresIncapacidadDetails() }
     val requiresPeriod = remember(code) { code.requiresPeriod() }
     val requiresTxt = remember(code) { code.requiresTxtFields() }
     val requiresCommission = remember(code) { code.requiresCommissionReason() }
@@ -313,7 +374,7 @@ private fun CaptureFormStep(
     fun loadDoctors() {
         scope.launch {
             if (doctorQuery.isBlank()) {
-                error = "Escribe nombre o número del médico"
+                error = "Escribe nombre o numero del medico"
                 return@launch
             }
             loading = true
@@ -349,7 +410,7 @@ private fun CaptureFormStep(
                     fechaInicioText = fechaInicio,
                     fechaFinalText = fechaFinal,
                     requiresRange = requiresRange,
-                    requiresIncapacity = requiresIncapacity,
+                    requiresIncapacidad = requiresIncapacity,
                     selectedDoctor = selectedDoctor,
                     fechaExpedidaText = fechaExpedida,
                     diagnosticoText = diagnostico,
@@ -362,7 +423,7 @@ private fun CaptureFormStep(
                     requiresCommission = requiresCommission,
                     motivoComisionText = motivoComision,
                     requiresGrantedBy = requiresGrantedBy,
-                    otorgadoText = otorgado
+                    otorgadorText = otorgado
                 )
             }.onFailure {
                 error = it.message ?: "Revisa el formulario"
@@ -379,12 +440,12 @@ private fun CaptureFormStep(
     }
 
     LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        item { TextButton(onClick = onBack) { Text("← Código") } }
+        item { TextButton(onClick = onBack) { Text("<- Codigo") } }
         item {
             HeroHeader(
                 title = "Datos de captura",
-                subtitle = "Completa solo los campos requeridos para este código",
-                icon = "📋"
+                subtitle = "Completa solo los campos requeridos para este codigo",
+                icon = "D"
             )
         }
         item { CaptureStepper(current = 3) }
@@ -400,8 +461,8 @@ private fun CaptureFormStep(
         }
         if (requiresIncapacity) {
             item {
-                CaptureSectionCard(title = "Información médica", subtitle = "Datos requeridos para incapacidades") {
-                    Text(selectedDoctor?.let { "Médico seleccionado: ${it.numEmpleado} - ${it.fullName}" } ?: "Selecciona médico")
+                CaptureSectionCard(title = "Informacion medica", subtitle = "Datos requeridos para incapacidades") {
+                    Text(selectedDoctor?.let { "Medico seleccionado: ${it.numEmpleado} - ${it.fullName}" } ?: "Selecciona medico")
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                         OutlinedTextField(
                             value = doctorQuery,
@@ -409,7 +470,7 @@ private fun CaptureFormStep(
                                 doctorQuery = it
                                 selectedDoctor = null
                             },
-                            label = { Text("Médico") },
+                            label = { Text("Medico") },
                             singleLine = true,
                             modifier = Modifier.weight(1f)
                         )
@@ -426,14 +487,14 @@ private fun CaptureFormStep(
                     OutlinedTextField(
                         value = diagnostico,
                         onValueChange = { diagnostico = it },
-                        label = { Text("Diagnóstico") },
+                        label = { Text("Diagnostico") },
                         modifier = Modifier.fillMaxWidth()
                     )
                     Spacer(Modifier.height(8.dp))
                     OutlinedTextField(
                         value = numLicencia,
                         onValueChange = { numLicencia = it },
-                        label = { Text("Número de licencia") },
+                        label = { Text("Numero de licencia") },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -455,7 +516,7 @@ private fun CaptureFormStep(
         }
         if (requiresTxt || requiresCommission || requiresGrantedBy) {
             item {
-                CaptureSectionCard(title = "Información adicional", subtitle = "Campos complementarios del código") {
+                CaptureSectionCard(title = "Informacion adicional", subtitle = "Campos complementarios del codigo") {
                     if (requiresTxt) {
                         OutlinedTextField(
                             value = autorizaTxt,
@@ -476,7 +537,7 @@ private fun CaptureFormStep(
                         OutlinedTextField(
                             value = motivoComision,
                             onValueChange = { motivoComision = it },
-                            label = { Text("Motivo comisión") },
+                            label = { Text("Motivo comision") },
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
@@ -528,29 +589,6 @@ private fun SearchBox(
 }
 
 @Composable
-private fun CodeCategorySelector(selected: String, onSelected: (String) -> Unit) {
-    val categories = listOf("Todos", "Vacaciones", "Incapacidad", "Rango", "TXT")
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        categories.chunked(3).forEach { row ->
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                row.forEach { category ->
-                    if (category == selected) {
-                        Button(onClick = { onSelected(category) }, modifier = Modifier.weight(1f)) {
-                            Text(category)
-                        }
-                    } else {
-                        TextButton(onClick = { onSelected(category) }, modifier = Modifier.weight(1f)) {
-                            Text(category)
-                        }
-                    }
-                }
-                repeat(3 - row.size) { Spacer(modifier = Modifier.weight(1f)) }
-            }
-        }
-    }
-}
-
-@Composable
 private fun EmployeeSelectCard(employee: Employee, onClick: () -> Unit) {
     Card(elevation = 5.dp, shape = RoundedCornerShape(22.dp), modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -577,7 +615,7 @@ private fun CodeSelectCard(code: IncidenceCode, onClick: () -> Unit) {
             }
             Text(code.description, style = MaterialTheme.typography.h6, fontWeight = FontWeight.Bold)
             Text("Requiere: ${requirementsSummary(code)}", color = MaterialTheme.colors.onSurface.copy(alpha = 0.72f))
-            Button(onClick = onClick, modifier = Modifier.fillMaxWidth()) { Text("Seleccionar código") }
+            Button(onClick = onClick, modifier = Modifier.fillMaxWidth()) { Text("Seleccionar codigo") }
         }
     }
 }
@@ -589,9 +627,9 @@ private fun CaptureContextCard(employee: Employee, code: IncidenceCode) {
             Text("Resumen", style = MaterialTheme.typography.h6, fontWeight = FontWeight.Black)
             StatusPill("Empleado ${employee.numEmpleado}", Guinda)
             Text(employee.fullName, fontWeight = FontWeight.Bold)
-            Text(employee.department?.description ?: "—", style = MaterialTheme.typography.caption)
+            Text(employee.department?.description ?: "-", style = MaterialTheme.typography.caption)
             Divider()
-            StatusPill("Código ${code.code}", Oro)
+            StatusPill("Codigo ${code.code}", Oro)
             Text(code.description, fontWeight = FontWeight.Bold)
         }
     }
@@ -632,7 +670,7 @@ private object ColumnScopeLike
 
 @Composable
 private fun CaptureStepper(current: Int) {
-    val steps = listOf("Empleado", "Código", "Datos")
+    val steps = listOf("Empleado", "Codigo", "Datos")
     Card(elevation = 3.dp, shape = RoundedCornerShape(18.dp), modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier.padding(14.dp),
@@ -696,7 +734,7 @@ private fun buildCaptureRequest(
     fechaInicioText: String,
     fechaFinalText: String,
     requiresRange: Boolean,
-    requiresIncapacity: Boolean,
+    requiresIncapacidad: Boolean,
     selectedDoctor: Doctor?,
     fechaExpedidaText: String,
     diagnosticoText: String,
@@ -709,7 +747,7 @@ private fun buildCaptureRequest(
     requiresCommission: Boolean,
     motivoComisionText: String,
     requiresGrantedBy: Boolean,
-    otorgadoText: String
+    otorgadorText: String
 ): StoreIncidenciaRequest {
     val (startDate, fechaInicio) = parseDate("Fecha inicio", fechaInicioText)
     val (endDate, fechaFinal) = if (requiresRange) {
@@ -723,21 +761,21 @@ private fun buildCaptureRequest(
     var fechaExpedida: String? = null
     var diagnostico: String? = null
     var numLicencia: String? = null
-    if (requiresIncapacity) {
-        medicoId = selectedDoctor?.id ?: throw IllegalArgumentException("Selecciona un médico válido")
+    if (requiresIncapacidad) {
+        medicoId = selectedDoctor?.id ?: throw IllegalArgumentException("Selecciona un medico valido")
         fechaExpedida = parseDate("Fecha expedida", fechaExpedidaText).second
-        diagnostico = diagnosticoText.trim().ifBlank { throw IllegalArgumentException("Diagnóstico es requerido") }
-        numLicencia = numLicenciaText.trim().ifBlank { throw IllegalArgumentException("Número de licencia es requerido") }
+        diagnostico = diagnosticoText.trim().ifBlank { throw IllegalArgumentException("Diagnostico es requerido") }
+        numLicencia = numLicenciaText.trim().ifBlank { throw IllegalArgumentException("Numero de licencia es requerido") }
     }
 
     val periodoId = if (requiresPeriod) {
-        selectedPeriod?.id ?: throw IllegalArgumentException("Selecciona un periodo válido")
+        selectedPeriod?.id ?: throw IllegalArgumentException("Selecciona un periodo valido")
     } else null
 
     val autorizaTxt = if (requiresTxt) autorizaTxtText.trim().ifBlank { throw IllegalArgumentException("Autoriza TXT es requerido") } else null
     val coberturaTxt = if (requiresTxt) coberturaTxtText.trim().ifBlank { throw IllegalArgumentException("Cobertura TXT es requerido") } else null
-    val motivoComision = if (requiresCommission) motivoComisionText.trim().ifBlank { throw IllegalArgumentException("Motivo comisión es requerido") } else null
-    val otorgado = if (requiresGrantedBy) otorgadoText.trim().ifBlank { throw IllegalArgumentException("Otorgado es requerido") } else null
+    val motivoComision = if (requiresCommission) motivoComisionText.trim().ifBlank { throw IllegalArgumentException("Motivo comision es requerido") } else null
+    val otorgado = if (requiresGrantedBy) otorgadorText.trim().ifBlank { throw IllegalArgumentException("Otorgado es requerido") } else null
 
     return StoreIncidenciaRequest(
         employeeId = employee.id,
@@ -774,7 +812,7 @@ private fun parseDate(label: String, value: String): Pair<Date, String> {
         formatter.parse(normalized)
     } catch (_: ParseException) {
         null
-    } ?: throw IllegalArgumentException("$label no es una fecha válida")
+    } ?: throw IllegalArgumentException("$label no es una fecha valida")
     return parsed to normalized
 }
 
@@ -784,7 +822,7 @@ private fun IncidenceCode.requiresDateRange(): Boolean = requiresRange || normal
     "40", "41", "47", "48", "49", "53", "54", "55", "60", "61", "62", "63"
 )
 
-private fun IncidenceCode.requiresIncapacityDetails(): Boolean =
+private fun IncidenceCode.requiresIncapacidadDetails(): Boolean =
     requiresMedico || isIncapacidad || normalizedCode() in setOf("53", "54", "55")
 
 private fun IncidenceCode.requiresPeriod(): Boolean =
@@ -799,12 +837,12 @@ private fun IncidenceCode.requiresGrantedBy(): Boolean = requiresOtorgado || nor
 private fun requirementsSummary(code: IncidenceCode): String {
     val parts = mutableListOf<String>()
     if (code.requiresDateRange()) parts += "Rango"
-    if (code.requiresIncapacityDetails()) parts += "Médico"
+    if (code.requiresIncapacidadDetails()) parts += "Medico"
     if (code.requiresPeriod()) parts += "Periodo"
     if (code.requiresTxtFields()) parts += "TXT"
-    if (code.requiresCommissionReason()) parts += "Comisión"
+    if (code.requiresCommissionReason()) parts += "Comision"
     if (code.requiresGrantedBy()) parts += "Otorgado"
-    return parts.ifEmpty { listOf("—") }.joinToString(", ")
+    return parts.ifEmpty { listOf("-") }.joinToString(", ")
 }
 
 private fun Throwable.userMessage(): String = when (this) {
