@@ -15,15 +15,16 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Button
-import androidx.compose.material.Card
-import androidx.compose.material.CircularProgressIndicator
-import androidx.compose.material.Divider
-import androidx.compose.material.Icon
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.OutlinedTextField
-import androidx.compose.material.Text
-import androidx.compose.material.TextButton
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -173,7 +174,7 @@ private fun CaptureEmployeeStep(
         }
         item { CaptureStepper(current = 1) }
         item {
-            Card(modifier = Modifier.fillMaxWidth(), elevation = 2.dp) {
+            Card(modifier = Modifier.fillMaxWidth(), elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)) {
                 Column(modifier = Modifier.padding(12.dp)) {
                     OutlinedTextField(
                         value = uiState.query,
@@ -190,8 +191,8 @@ private fun CaptureEmployeeStep(
             EmployeeSearchResultState.Idle -> item {
                 Text(
                     text = "Escribe para buscar",
-                    style = MaterialTheme.typography.caption,
-                    color = MaterialTheme.colors.onSurface.copy(alpha = 0.5f),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                     modifier = Modifier.padding(horizontal = 4.dp, vertical = 8.dp)
                 )
             }
@@ -201,13 +202,13 @@ private fun CaptureEmployeeStep(
                 item {
                     Text(
                         text = "${result.employees.size} coincidencia(s)",
-                        style = MaterialTheme.typography.subtitle2,
+                        style = MaterialTheme.typography.titleSmall,
                         modifier = Modifier.padding(horizontal = 4.dp, vertical = 8.dp)
                     )
                 }
                 if (result.employees.isEmpty()) {
                     item {
-                        Card(modifier = Modifier.fillMaxWidth(), backgroundColor = Oro.copy(alpha = 0.1f)) {
+                        Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Oro.copy(alpha = 0.1f))) {
                             Text(
                                 text = "No se encontraron empleados que coincidan con '${uiState.query}'",
                                 modifier = Modifier.padding(16.dp),
@@ -252,7 +253,7 @@ private fun CaptureCodeStep(
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                elevation = 2.dp
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
                     OutlinedTextField(
@@ -270,8 +271,8 @@ private fun CaptureCodeStep(
             CodeSearchResultState.Idle -> item {
                 Text(
                     text = "Escribe para buscar",
-                    style = MaterialTheme.typography.caption,
-                    color = MaterialTheme.colors.onSurface.copy(alpha = 0.5f),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                     modifier = Modifier.padding(horizontal = 4.dp, vertical = 8.dp)
                 )
             }
@@ -281,7 +282,7 @@ private fun CaptureCodeStep(
                 item {
                     Text(
                         text = "${result.codes.size} coincidencia(s)",
-                        style = MaterialTheme.typography.subtitle2,
+                        style = MaterialTheme.typography.titleSmall,
                         modifier = Modifier.padding(horizontal = 4.dp, vertical = 8.dp)
                     )
                 }
@@ -290,7 +291,7 @@ private fun CaptureCodeStep(
                     item {
                         Card(
                             modifier = Modifier.fillMaxWidth(),
-                            backgroundColor = Oro.copy(alpha = 0.1f)
+                            colors = CardDefaults.cardColors(containerColor = Oro.copy(alpha = 0.1f))
                         ) {
                             Text(
                                 text = "No se encontraron codigos que coincidan con '${uiState.query}'",
@@ -426,17 +427,17 @@ private fun CaptureFormStep(
                     if (selectedDoctor != null) {
                         Card(
                             modifier = Modifier.fillMaxWidth(),
-                            backgroundColor = Guinda.copy(alpha = 0.1f)
+                            colors = CardDefaults.cardColors(containerColor = Guinda.copy(alpha = 0.1f))
                         ) {
                             Column(modifier = Modifier.padding(12.dp)) {
                                 Text(
                                     text = "Médico seleccionado",
-                                    style = MaterialTheme.typography.caption,
+                                    style = MaterialTheme.typography.labelSmall,
                                     color = Guinda
                                 )
                                 Text(
                                     text = "${selectedDoctor!!.numEmpleado} - ${selectedDoctor!!.fullName}",
-                                    style = MaterialTheme.typography.h6,
+                                    style = MaterialTheme.typography.titleLarge,
                                     fontWeight = FontWeight.Bold
                                 )
                                 TextButton(onClick = {
@@ -481,8 +482,8 @@ private fun CaptureFormStep(
                                 if (result.doctors.isEmpty()) {
                                     Text(
                                         text = "No se encontraron médicos",
-                                        style = MaterialTheme.typography.body2,
-                                        color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f)
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                                     )
                                 } else {
                                     result.doctors.forEach { doctor ->
@@ -494,7 +495,7 @@ private fun CaptureFormStep(
                                                     selectedDoctor = doctor
                                                     doctorSearchViewModel.showSelectedDoctor(doctor)
                                                 },
-                                            backgroundColor = Verde.copy(alpha = 0.1f)
+                                            colors = CardDefaults.cardColors(containerColor = Verde.copy(alpha = 0.1f))
                                         ) {
                                             Row(
                                                 modifier = Modifier.padding(12.dp),
@@ -503,12 +504,12 @@ private fun CaptureFormStep(
                                                 Column(modifier = Modifier.weight(1f)) {
                                                     Text(
                                                         text = doctor.numEmpleado,
-                                                        style = MaterialTheme.typography.caption,
+                                                        style = MaterialTheme.typography.labelSmall,
                                                         color = Verde
                                                     )
                                                     Text(
                                                         text = doctor.fullName,
-                                                        style = MaterialTheme.typography.body1,
+                                                        style = MaterialTheme.typography.bodyLarge,
                                                         fontWeight = FontWeight.SemiBold
                                                     )
                                                 }
@@ -526,7 +527,7 @@ private fun CaptureFormStep(
                     }
 
                     Spacer(Modifier.height(16.dp))
-                    Divider()
+                    HorizontalDivider()
                     Spacer(Modifier.height(16.dp))
 
                     DatePickerField(label = "Fecha expedida", value = fechaExpedida, onValueChange = { fechaExpedida = it })
@@ -564,7 +565,7 @@ private fun CaptureFormStep(
 
                     Spacer(Modifier.height(8.dp))
                     when (val periodsState = formUiState.periodsState) {
-                        PeriodsState.Idle -> Text("Los periodos se cargarán automáticamente.", style = MaterialTheme.typography.caption)
+                        PeriodsState.Idle -> Text("Los periodos se cargarán automáticamente.", style = MaterialTheme.typography.labelSmall)
                         PeriodsState.Loading -> LoadingRow("Cargando periodos...")
                         is PeriodsState.Error -> ErrorCard(periodsState.message)
                         is PeriodsState.Success -> {
@@ -632,8 +633,8 @@ private fun CaptureFormStep(
 @Composable
 private fun PeriodSelectRow(period: Periodo, selected: Boolean, onClick: () -> Unit) {
     Card(
-        elevation = if (selected) 4.dp else 1.dp,
-        backgroundColor = if (selected) Verde.copy(alpha = 0.12f) else MaterialTheme.colors.surface,
+        elevation = CardDefaults.cardElevation(defaultElevation = if (selected) 3.dp else 1.dp),
+        colors = CardDefaults.cardColors(containerColor = if (selected) Verde.copy(alpha = 0.12f) else MaterialTheme.colorScheme.surface),
         shape = RoundedCornerShape(14.dp),
         modifier = Modifier
             .fillMaxWidth()
@@ -648,7 +649,7 @@ private fun PeriodSelectRow(period: Periodo, selected: Boolean, onClick: () -> U
             StatusPill(if (selected) "OK" else "Elegir", if (selected) Verde else Oro)
             Column(modifier = Modifier.weight(1f)) {
                 Text(period.label.ifBlank { "Periodo ${period.periodo}/${period.year}" }, fontWeight = FontWeight.Bold)
-                Text("Periodo vacacional", style = MaterialTheme.typography.caption, color = MaterialTheme.colors.onSurface.copy(alpha = 0.65f))
+                Text("Periodo vacacional", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f))
             }
         }
     }
@@ -660,13 +661,13 @@ private fun CaptureSubmitCard(
     submitting: Boolean,
     onSubmit: () -> Unit
 ) {
-    Card(elevation = 4.dp, shape = RoundedCornerShape(18.dp), modifier = Modifier.fillMaxWidth()) {
+    Card(elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), shape = RoundedCornerShape(18.dp), modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text("Finalizar captura", style = MaterialTheme.typography.subtitle1, fontWeight = FontWeight.Bold)
+            Text("Finalizar captura", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Text(
                 "Revisa la información antes de guardar. La incidencia se enviará al servidor.",
-                style = MaterialTheme.typography.caption,
-                color = MaterialTheme.colors.onSurface.copy(alpha = 0.68f)
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.68f)
             )
             when (submitState) {
                 CaptureSubmitState.Idle -> Unit
@@ -708,15 +709,15 @@ private fun SearchBox(
 
 @Composable
 private fun EmployeeSelectCard(employee: Employee, onClick: () -> Unit) {
-    Card(elevation = 5.dp, shape = RoundedCornerShape(22.dp), modifier = Modifier.fillMaxWidth()) {
+    Card(elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), shape = RoundedCornerShape(22.dp), modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 StatusPill(employee.numEmpleado, Guinda)
                 employee.department?.code?.takeIf { it.isNotBlank() }?.let { StatusPill(it, Verde) }
             }
-            Text(employee.fullName, style = MaterialTheme.typography.h6, fontWeight = FontWeight.Bold)
-            Text(employee.department?.description ?: "Sin departamento", color = MaterialTheme.colors.onSurface.copy(alpha = 0.70f))
-            if (employee.puesto.isNotBlank()) Text(employee.puesto, style = MaterialTheme.typography.body2)
+            Text(employee.fullName, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Text(employee.department?.description ?: "Sin departamento", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.70f))
+            if (employee.puesto.isNotBlank()) Text(employee.puesto, style = MaterialTheme.typography.bodyMedium)
             Button(onClick = onClick, modifier = Modifier.fillMaxWidth()) { Text("Seleccionar empleado") }
         }
     }
@@ -724,15 +725,15 @@ private fun EmployeeSelectCard(employee: Employee, onClick: () -> Unit) {
 
 @Composable
 private fun CodeSelectCard(code: IncidenceCode, onClick: () -> Unit) {
-    Card(elevation = 5.dp, shape = RoundedCornerShape(22.dp), modifier = Modifier.fillMaxWidth()) {
+    Card(elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), shape = RoundedCornerShape(22.dp), modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 StatusPill(code.code, Oro)
                 if (code.isVacacional) StatusPill("Vacacional", Verde)
                 if (code.isIncapacidad) StatusPill("Incapacidad", Guinda)
             }
-            Text(code.description, style = MaterialTheme.typography.h6, fontWeight = FontWeight.Bold)
-            Text("Requiere: ${requirementsSummary(code)}", color = MaterialTheme.colors.onSurface.copy(alpha = 0.72f))
+            Text(code.description, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Text("Requiere: ${requirementsSummary(code)}", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.72f))
             Button(onClick = onClick, modifier = Modifier.fillMaxWidth()) { Text("Seleccionar codigo") }
         }
     }
@@ -740,13 +741,13 @@ private fun CodeSelectCard(code: IncidenceCode, onClick: () -> Unit) {
 
 @Composable
 private fun CaptureContextCard(employee: Employee, code: IncidenceCode) {
-    Card(elevation = 5.dp, shape = RoundedCornerShape(22.dp), modifier = Modifier.fillMaxWidth()) {
+    Card(elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), shape = RoundedCornerShape(22.dp), modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("Resumen", style = MaterialTheme.typography.h6, fontWeight = FontWeight.Black)
+            Text("Resumen", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
             StatusPill("Empleado ${employee.numEmpleado}", Guinda)
             Text(employee.fullName, fontWeight = FontWeight.Bold)
-            Text(employee.department?.description ?: "-", style = MaterialTheme.typography.caption)
-            Divider()
+            Text(employee.department?.description ?: "-", style = MaterialTheme.typography.labelSmall)
+            HorizontalDivider()
             StatusPill("Codigo ${code.code}", Oro)
             Text(code.description, fontWeight = FontWeight.Bold)
         }
@@ -755,12 +756,12 @@ private fun CaptureContextCard(employee: Employee, code: IncidenceCode) {
 
 @Composable
 private fun SelectedEmployeeSummary(employee: Employee) {
-    Card(elevation = 4.dp, shape = RoundedCornerShape(20.dp), modifier = Modifier.fillMaxWidth()) {
+    Card(elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), shape = RoundedCornerShape(20.dp), modifier = Modifier.fillMaxWidth()) {
         Row(modifier = Modifier.padding(14.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             StatusPill(employee.numEmpleado, Guinda)
             Column(modifier = Modifier.weight(1f)) {
                 Text(employee.fullName, fontWeight = FontWeight.Bold)
-                Text(employee.department?.description ?: "Sin departamento", style = MaterialTheme.typography.caption)
+                Text(employee.department?.description ?: "Sin departamento", style = MaterialTheme.typography.labelSmall)
             }
         }
     }
@@ -772,13 +773,13 @@ private fun CaptureSectionCard(
     subtitle: String? = null,
     content: @Composable ColumnScopeLike.() -> Unit
 ) {
-    Card(elevation = 4.dp, shape = RoundedCornerShape(22.dp), modifier = Modifier.fillMaxWidth()) {
+    Card(elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), shape = RoundedCornerShape(22.dp), modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text(title, style = MaterialTheme.typography.h6, fontWeight = FontWeight.Black)
+            Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
             subtitle?.takeIf { it.isNotBlank() }?.let {
-                Text(it, style = MaterialTheme.typography.caption, color = MaterialTheme.colors.onSurface.copy(alpha = 0.65f))
+                Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f))
             }
-            Divider()
+            HorizontalDivider()
             ColumnScopeLike.content()
         }
     }
@@ -789,7 +790,7 @@ private object ColumnScopeLike
 @Composable
 private fun CaptureStepper(current: Int) {
     val steps = listOf("Empleado", "Codigo", "Datos")
-    Card(elevation = 3.dp, shape = RoundedCornerShape(18.dp), modifier = Modifier.fillMaxWidth()) {
+    Card(elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), shape = RoundedCornerShape(18.dp), modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier.padding(14.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -803,19 +804,19 @@ private fun CaptureStepper(current: Int) {
                         modifier = Modifier
                             .size(34.dp)
                             .clip(CircleShape)
-                            .background(if (active) Guinda else MaterialTheme.colors.onSurface.copy(alpha = 0.12f)),
+                            .background(if (active) Guinda else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = stepNumber.toString(),
-                            color = if (active) Color.White else MaterialTheme.colors.onSurface.copy(alpha = 0.55f),
+                            color = if (active) Color.White else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
                             fontWeight = FontWeight.Black
                         )
                     }
                     Text(
                         label,
-                        style = MaterialTheme.typography.caption,
-                        color = if (active) Guinda else MaterialTheme.colors.onSurface.copy(alpha = 0.55f),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (active) Guinda else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
                         fontWeight = if (active) FontWeight.Bold else FontWeight.Normal
                     )
                 }
@@ -834,15 +835,15 @@ private fun LoadingRow(message: String) {
 
 @Composable
 private fun ErrorCard(message: String) {
-    Card(backgroundColor = MaterialTheme.colors.error.copy(alpha = 0.10f), modifier = Modifier.fillMaxWidth()) {
-        Text(message, color = MaterialTheme.colors.error, modifier = Modifier.padding(12.dp))
+    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.10f)), modifier = Modifier.fillMaxWidth()) {
+        Text(message, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(12.dp))
     }
 }
 
 @Composable
 private fun SuccessCard(message: String) {
-    Card(backgroundColor = MaterialTheme.colors.secondary.copy(alpha = 0.10f), modifier = Modifier.fillMaxWidth()) {
-        Text(message, color = MaterialTheme.colors.secondary, modifier = Modifier.padding(12.dp))
+    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.10f)), modifier = Modifier.fillMaxWidth()) {
+        Text(message, color = MaterialTheme.colorScheme.secondary, modifier = Modifier.padding(12.dp))
     }
 }
 
