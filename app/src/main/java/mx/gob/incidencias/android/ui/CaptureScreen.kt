@@ -1,14 +1,19 @@
 package mx.gob.incidencias.android.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Button
 import androidx.compose.material.Card
 import androidx.compose.material.CircularProgressIndicator
@@ -23,7 +28,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import mx.gob.incidencias.android.data.api.ApiException
@@ -35,6 +44,11 @@ import mx.gob.incidencias.android.data.model.IncidenceCode
 import mx.gob.incidencias.android.data.model.Periodo
 import mx.gob.incidencias.android.data.model.StoreIncidenciaRequest
 import mx.gob.incidencias.android.ui.components.DatePickerField
+import mx.gob.incidencias.android.ui.components.HeroHeader
+import mx.gob.incidencias.android.ui.components.StatusPill
+import mx.gob.incidencias.android.ui.theme.Guinda
+import mx.gob.incidencias.android.ui.theme.Oro
+import mx.gob.incidencias.android.ui.theme.Verde
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -88,21 +102,29 @@ fun CaptureScreen(api: ApiService, onBackToMenu: () -> Unit) {
             }
         )
 
-        CaptureStep.Success -> Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("Incidencia capturada", style = MaterialTheme.typography.h5)
-            SuccessCard(successMessage.ifBlank { "Incidencia capturada correctamente" })
-            if (successToken.isNotBlank()) Text("Token: $successToken", style = MaterialTheme.typography.caption)
-            Button(
-                onClick = {
-                    selectedEmployee = null
-                    selectedCode = null
-                    successMessage = ""
-                    successToken = ""
-                    step = CaptureStep.Employee
-                },
-                modifier = Modifier.fillMaxWidth()
-            ) { Text("Capturar otra") }
-            TextButton(onClick = onBackToMenu, modifier = Modifier.fillMaxWidth()) { Text("Volver al menú") }
+        CaptureStep.Success -> LazyColumn(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            item {
+                HeroHeader(
+                    title = "Incidencia capturada",
+                    subtitle = "El registro fue enviado y validado por el servidor",
+                    icon = "✅"
+                )
+            }
+            item { SuccessCard(successMessage.ifBlank { "Incidencia capturada correctamente" }) }
+            if (successToken.isNotBlank()) item { StatusPill("Token: $successToken", Verde) }
+            item {
+                Button(
+                    onClick = {
+                        selectedEmployee = null
+                        selectedCode = null
+                        successMessage = ""
+                        successToken = ""
+                        step = CaptureStep.Employee
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) { Text("Capturar otra") }
+            }
+            item { TextButton(onClick = onBackToMenu, modifier = Modifier.fillMaxWidth()) { Text("Volver al menú") } }
         }
     }
 
@@ -133,24 +155,33 @@ private fun CaptureEmployeeStep(
         }
     }
 
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        TextButton(onClick = onBack) { Text("← Menú") }
-        Text("Capturar incidencia", style = MaterialTheme.typography.h5)
-        Text("Paso 1 de 3 · Selecciona empleado")
-        SearchBox(
-            value = query,
-            onValueChange = { query = it },
-            label = "Nombre o número de empleado",
-            buttonText = "Buscar empleado",
-            loading = loading,
-            onSearch = ::search
-        )
-        error?.let { ErrorCard(it) }
-        if (loading) LoadingRow("Buscando empleados...")
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(results) { employee ->
-                EmployeeSelectCard(employee = employee, onClick = { onSelected(employee) })
+    LazyColumn(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        item { TextButton(onClick = onBack) { Text("← Menú") } }
+        item {
+            HeroHeader(
+                title = "Nueva incidencia",
+                subtitle = "Selecciona empleado, código y completa la captura",
+                icon = "📝"
+            )
+        }
+        item { CaptureStepper(current = 1) }
+        item {
+            CaptureSectionCard(title = "Empleado", subtitle = "Busca por número, nombre o apellidos") {
+                SearchBox(
+                    value = query,
+                    onValueChange = { query = it },
+                    label = "Nombre o número de empleado",
+                    buttonText = "Buscar empleado",
+                    loading = loading,
+                    onSearch = ::search
+                )
             }
+        }
+        error?.let { item { ErrorCard(it) } }
+        if (loading) item { LoadingRow("Buscando empleados...") }
+        if (results.isNotEmpty()) item { Text("${results.size} resultado(s)", style = MaterialTheme.typography.subtitle1) }
+        items(results) { employee ->
+            EmployeeSelectCard(employee = employee, onClick = { onSelected(employee) })
         }
     }
 }
@@ -179,23 +210,32 @@ private fun CaptureCodeStep(
         }
     }
 
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        TextButton(onClick = onBack) { Text("← Empleado") }
-        Text("Seleccionar código", style = MaterialTheme.typography.h5)
-        Text("Paso 2 de 3 · ${employee?.fullName.orEmpty()}")
-        SearchBox(
-            value = query,
-            onValueChange = { query = it },
-            label = "Código o descripción",
-            buttonText = "Buscar código",
-            loading = loading,
-            onSearch = ::search
-        )
-        error?.let { ErrorCard(it) }
-        if (loading) LoadingRow("Buscando códigos...")
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(results) { code -> CodeSelectCard(code = code, onClick = { onSelected(code) }) }
+    LazyColumn(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        item { TextButton(onClick = onBack) { Text("← Empleado") } }
+        item {
+            HeroHeader(
+                title = "Código de incidencia",
+                subtitle = employee?.fullName ?: "Selecciona el tipo de incidencia",
+                icon = "🏷️"
+            )
         }
+        item { CaptureStepper(current = 2) }
+        item { employee?.let { SelectedEmployeeSummary(it) } }
+        item {
+            CaptureSectionCard(title = "Catálogo de códigos", subtitle = "Busca por código o descripción") {
+                SearchBox(
+                    value = query,
+                    onValueChange = { query = it },
+                    label = "Código o descripción",
+                    buttonText = "Buscar código",
+                    loading = loading,
+                    onSearch = ::search
+                )
+            }
+        }
+        error?.let { item { ErrorCard(it) } }
+        if (loading) item { LoadingRow("Buscando códigos...") }
+        items(results) { code -> CodeSelectCard(code = code, onClick = { onSelected(code) }) }
     }
 }
 
@@ -305,14 +345,18 @@ private fun CaptureFormStep(
     }
 
     LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        item { TextButton(onClick = onBack) { Text("← Código") } }
         item {
-            TextButton(onClick = onBack) { Text("← Código") }
-            Text("Datos de incidencia", style = MaterialTheme.typography.h5)
-            Text("Paso 3 de 3")
+            HeroHeader(
+                title = "Datos de captura",
+                subtitle = "Completa solo los campos requeridos para este código",
+                icon = "📋"
+            )
         }
+        item { CaptureStepper(current = 3) }
         item { CaptureContextCard(employee, code) }
         item {
-            SectionCard(title = "Fechas") {
+            CaptureSectionCard(title = "Fechas", subtitle = "Selecciona fechas desde el calendario") {
                 DatePickerField(label = "Fecha inicio", value = fechaInicio, onValueChange = { fechaInicio = it })
                 if (requiresRange) {
                     Spacer(Modifier.height(8.dp))
@@ -322,7 +366,7 @@ private fun CaptureFormStep(
         }
         if (requiresIncapacity) {
             item {
-                SectionCard(title = "Información médica") {
+                CaptureSectionCard(title = "Información médica", subtitle = "Datos requeridos para incapacidades") {
                     Text(selectedDoctor?.let { "Médico seleccionado: ${it.numEmpleado} - ${it.fullName}" } ?: "Selecciona médico")
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                         OutlinedTextField(
@@ -364,7 +408,7 @@ private fun CaptureFormStep(
         }
         if (requiresPeriod) {
             item {
-                SectionCard(title = "Periodo vacacional") {
+                CaptureSectionCard(title = "Periodo vacacional", subtitle = "Selecciona el periodo aplicable") {
                     Text(selectedPeriod?.let { "Periodo seleccionado: ${it.label.ifBlank { "${it.periodo}/${it.year}" }}" } ?: "Selecciona periodo")
                     Button(onClick = ::loadPeriods, enabled = !loading, modifier = Modifier.fillMaxWidth()) { Text("Cargar periodos") }
                     periods.take(12).forEach { period ->
@@ -377,7 +421,7 @@ private fun CaptureFormStep(
         }
         if (requiresTxt || requiresCommission || requiresGrantedBy) {
             item {
-                SectionCard(title = "Información adicional") {
+                CaptureSectionCard(title = "Información adicional", subtitle = "Campos complementarios del código") {
                     if (requiresTxt) {
                         OutlinedTextField(
                             value = autorizaTxt,
@@ -451,43 +495,76 @@ private fun SearchBox(
 
 @Composable
 private fun EmployeeSelectCard(employee: Employee, onClick: () -> Unit) {
-    Card(elevation = 2.dp, modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text("${employee.numEmpleado} - ${employee.fullName}", style = MaterialTheme.typography.subtitle1)
-            Text(employee.department?.description ?: "Sin departamento")
+    Card(elevation = 5.dp, shape = RoundedCornerShape(22.dp), modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                StatusPill(employee.numEmpleado, Guinda)
+                employee.department?.code?.takeIf { it.isNotBlank() }?.let { StatusPill(it, Verde) }
+            }
+            Text(employee.fullName, style = MaterialTheme.typography.h6, fontWeight = FontWeight.Bold)
+            Text(employee.department?.description ?: "Sin departamento", color = MaterialTheme.colors.onSurface.copy(alpha = 0.70f))
             if (employee.puesto.isNotBlank()) Text(employee.puesto, style = MaterialTheme.typography.body2)
-            Button(onClick = onClick, modifier = Modifier.fillMaxWidth()) { Text("Seleccionar") }
+            Button(onClick = onClick, modifier = Modifier.fillMaxWidth()) { Text("Seleccionar empleado") }
         }
     }
 }
 
 @Composable
 private fun CodeSelectCard(code: IncidenceCode, onClick: () -> Unit) {
-    Card(elevation = 2.dp, modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text("${code.code} - ${code.description}", style = MaterialTheme.typography.subtitle1)
-            Text("Requiere: ${requirementsSummary(code)}", style = MaterialTheme.typography.body2)
-            Button(onClick = onClick, modifier = Modifier.fillMaxWidth()) { Text("Seleccionar") }
+    Card(elevation = 5.dp, shape = RoundedCornerShape(22.dp), modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                StatusPill(code.code, Oro)
+                if (code.isVacacional) StatusPill("Vacacional", Verde)
+                if (code.isIncapacidad) StatusPill("Incapacidad", Guinda)
+            }
+            Text(code.description, style = MaterialTheme.typography.h6, fontWeight = FontWeight.Bold)
+            Text("Requiere: ${requirementsSummary(code)}", color = MaterialTheme.colors.onSurface.copy(alpha = 0.72f))
+            Button(onClick = onClick, modifier = Modifier.fillMaxWidth()) { Text("Seleccionar código") }
         }
     }
 }
 
 @Composable
 private fun CaptureContextCard(employee: Employee, code: IncidenceCode) {
-    Card(elevation = 2.dp, modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text("Empleado: ${employee.numEmpleado} - ${employee.fullName}")
-            Text("Departamento: ${employee.department?.description ?: "—"}")
-            Text("Código: ${code.code} - ${code.description}")
+    Card(elevation = 5.dp, shape = RoundedCornerShape(22.dp), modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("Resumen", style = MaterialTheme.typography.h6, fontWeight = FontWeight.Black)
+            StatusPill("Empleado ${employee.numEmpleado}", Guinda)
+            Text(employee.fullName, fontWeight = FontWeight.Bold)
+            Text(employee.department?.description ?: "—", style = MaterialTheme.typography.caption)
+            Divider()
+            StatusPill("Código ${code.code}", Oro)
+            Text(code.description, fontWeight = FontWeight.Bold)
         }
     }
 }
 
 @Composable
-private fun SectionCard(title: String, content: @Composable ColumnScopeLike.() -> Unit) {
-    Card(elevation = 2.dp, modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(title, style = MaterialTheme.typography.h6)
+private fun SelectedEmployeeSummary(employee: Employee) {
+    Card(elevation = 4.dp, shape = RoundedCornerShape(20.dp), modifier = Modifier.fillMaxWidth()) {
+        Row(modifier = Modifier.padding(14.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            StatusPill(employee.numEmpleado, Guinda)
+            Column(modifier = Modifier.weight(1f)) {
+                Text(employee.fullName, fontWeight = FontWeight.Bold)
+                Text(employee.department?.description ?: "Sin departamento", style = MaterialTheme.typography.caption)
+            }
+        }
+    }
+}
+
+@Composable
+private fun CaptureSectionCard(
+    title: String,
+    subtitle: String? = null,
+    content: @Composable ColumnScopeLike.() -> Unit
+) {
+    Card(elevation = 4.dp, shape = RoundedCornerShape(22.dp), modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text(title, style = MaterialTheme.typography.h6, fontWeight = FontWeight.Black)
+            subtitle?.takeIf { it.isNotBlank() }?.let {
+                Text(it, style = MaterialTheme.typography.caption, color = MaterialTheme.colors.onSurface.copy(alpha = 0.65f))
+            }
             Divider()
             ColumnScopeLike.content()
         }
@@ -495,6 +572,44 @@ private fun SectionCard(title: String, content: @Composable ColumnScopeLike.() -
 }
 
 private object ColumnScopeLike
+
+@Composable
+private fun CaptureStepper(current: Int) {
+    val steps = listOf("Empleado", "Código", "Datos")
+    Card(elevation = 3.dp, shape = RoundedCornerShape(18.dp), modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.padding(14.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            steps.forEachIndexed { index, label ->
+                val stepNumber = index + 1
+                val active = stepNumber <= current
+                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Box(
+                        modifier = Modifier
+                            .size(34.dp)
+                            .clip(CircleShape)
+                            .background(if (active) Guinda else MaterialTheme.colors.onSurface.copy(alpha = 0.12f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = stepNumber.toString(),
+                            color = if (active) Color.White else MaterialTheme.colors.onSurface.copy(alpha = 0.55f),
+                            fontWeight = FontWeight.Black
+                        )
+                    }
+                    Text(
+                        label,
+                        style = MaterialTheme.typography.caption,
+                        color = if (active) Guinda else MaterialTheme.colors.onSurface.copy(alpha = 0.55f),
+                        fontWeight = if (active) FontWeight.Bold else FontWeight.Normal
+                    )
+                }
+            }
+        }
+    }
+}
 
 @Composable
 private fun LoadingRow(message: String) {
