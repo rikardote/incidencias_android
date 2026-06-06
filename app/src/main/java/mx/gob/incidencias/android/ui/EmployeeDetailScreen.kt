@@ -9,14 +9,15 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.Button
-import androidx.compose.material.Card
-import androidx.compose.material.CircularProgressIndicator
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Tab
-import androidx.compose.material.TabRow
-import androidx.compose.material.Text
-import androidx.compose.material.TextButton
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -170,14 +171,14 @@ fun EmployeeDetailScreen(
 
 @Composable
 private fun EmployeeHeader(employee: Employee) {
-    Card(elevation = 3.dp, modifier = Modifier.fillMaxWidth()) {
+    Card(elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(employee.fullName, style = MaterialTheme.typography.h6)
+            Text(employee.fullName, style = MaterialTheme.typography.titleLarge)
             Text("No. empleado: ${employee.numEmpleado}")
             Text("Departamento: ${employee.department?.description ?: "—"}")
             Text("Puesto: ${employee.puesto.ifBlank { "—" }}")
             val horario = listOf(employee.horario, employee.jornada).filter { it.isNotBlank() }.joinToString(" · ")
-            if (horario.isNotBlank()) Text(horario, style = MaterialTheme.typography.caption)
+            if (horario.isNotBlank()) Text(horario, style = MaterialTheme.typography.labelSmall)
         }
     }
 }
@@ -190,14 +191,14 @@ private fun FilterSummary(
     attendanceEnd: String,
     onShowFilters: () -> Unit
 ) {
-    Card(elevation = 1.dp, modifier = Modifier.fillMaxWidth()) {
+    Card(elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), modifier = Modifier.fillMaxWidth()) {
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text("Rangos activos", style = MaterialTheme.typography.caption, color = MaterialTheme.colors.onSurface.copy(alpha = 0.65f))
-                Text("Inc: ${shortRange(incidenceStart, incidenceEnd)} · Asist: ${shortRange(attendanceStart, attendanceEnd)}", style = MaterialTheme.typography.caption)
+                Text("Rangos activos", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f))
+                Text("Inc: ${shortRange(incidenceStart, incidenceEnd)} · Asist: ${shortRange(attendanceStart, attendanceEnd)}", style = MaterialTheme.typography.labelSmall)
             }
             TextButton(onClick = onShowFilters) { Text("Cambiar") }
         }
@@ -217,10 +218,10 @@ private fun FilterCard(
     onApply: () -> Unit,
     loading: Boolean
 ) {
-    Card(elevation = 2.dp, modifier = Modifier.fillMaxWidth()) {
+    Card(elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("Filtros", style = MaterialTheme.typography.h6)
-            Text("Incidencias", style = MaterialTheme.typography.subtitle2)
+            Text("Filtros", style = MaterialTheme.typography.titleLarge)
+            Text("Incidencias", style = MaterialTheme.typography.titleSmall)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                 DatePickerField(
                     label = "Inicio",
@@ -235,7 +236,7 @@ private fun FilterCard(
                     modifier = Modifier.weight(1f)
                 )
             }
-            Text("Asistencia", style = MaterialTheme.typography.subtitle2)
+            Text("Asistencia", style = MaterialTheme.typography.titleSmall)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                 DatePickerField(
                     label = "Inicio",
@@ -253,7 +254,7 @@ private fun FilterCard(
             Button(onClick = onApply, enabled = !loading, modifier = Modifier.fillMaxWidth()) {
                 Text("Aplicar filtros")
             }
-            Text("Formato: YYYY-MM-DD o YYYYMMDD", style = MaterialTheme.typography.caption)
+            Text("Formato: YYYY-MM-DD o YYYYMMDD", style = MaterialTheme.typography.labelSmall)
         }
     }
 }
@@ -295,11 +296,11 @@ private fun VacacionesTab(vacations: VacationResponse?) {
     LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         item { VacationSummary(vacations) }
         items(vacations.periods, key = { it.period.id }) { period ->
-            Card(elevation = 1.dp, modifier = Modifier.fillMaxWidth()) {
+            Card(elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), modifier = Modifier.fillMaxWidth()) {
                 Row(modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     Column(modifier = Modifier.weight(0.42f)) {
                         Text(period.period.label.orEmpty().ifBlank { "${period.period.period}/${period.period.year}" }, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        Text("Derecho ${formatDias(period.entitlement)} d", style = MaterialTheme.typography.caption)
+                        Text("Derecho ${formatDias(period.entitlement)} d", style = MaterialTheme.typography.labelSmall)
                     }
                     StatusPill("Usados ${formatDias(period.used)}", Oro, modifier = Modifier.weight(0.28f))
                     StatusPill("Pend. ${formatDias(period.pending)}", if (period.pending > 0) Verde else Guinda, modifier = Modifier.weight(0.30f))
@@ -322,15 +323,15 @@ private fun IncidenciasSummary(report: List<EmployeeReport>) {
 private fun IncidenciaCompactRow(record: EmployeeReport) {
     val qna = qnaLabel(record.qna)
     val periodo = periodLabel(record.periodo)
-    Card(elevation = 1.dp, modifier = Modifier.fillMaxWidth()) {
+    Card(elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), modifier = Modifier.fillMaxWidth()) {
         Row(modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Column(modifier = Modifier.weight(0.22f)) {
-                Text(record.codigo?.code.orEmpty().ifBlank { "—" }, color = Guinda, fontWeight = FontWeight.Black, style = MaterialTheme.typography.subtitle1)
-                Text(formatDateShort(record.fechaInicio), style = MaterialTheme.typography.caption)
+                Text(record.codigo?.code.orEmpty().ifBlank { "—" }, color = Guinda, fontWeight = FontWeight.Black, style = MaterialTheme.typography.titleMedium)
+                Text(formatDateShort(record.fechaInicio), style = MaterialTheme.typography.labelSmall)
             }
             Column(modifier = Modifier.weight(0.58f)) {
                 Text(record.codigo?.description.orEmpty(), fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(listOf(qna, periodo).filter { it.isNotBlank() }.joinToString(" · ").ifBlank { "Sin periodo/QNA" }, style = MaterialTheme.typography.caption, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(listOf(qna, periodo).filter { it.isNotBlank() }.joinToString(" · ").ifBlank { "Sin periodo/QNA" }, style = MaterialTheme.typography.labelSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             StatusPill("${formatDias(record.totalDias)} d", Oro, modifier = Modifier.weight(0.20f))
         }
@@ -350,15 +351,15 @@ private fun AttendanceSummary(rows: List<AttendanceDay>) {
 
 @Composable
 private fun AttendanceCompactRow(day: AttendanceDay) {
-    Card(elevation = 1.dp, modifier = Modifier.fillMaxWidth()) {
+    Card(elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), modifier = Modifier.fillMaxWidth()) {
         Row(modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Column(modifier = Modifier.weight(0.24f)) {
                 Text(formatDateShort(day.date), color = Guinda, fontWeight = FontWeight.Black)
-                Text("${day.numChecadas} chec.", style = MaterialTheme.typography.caption)
+                Text("${day.numChecadas} chec.", style = MaterialTheme.typography.labelSmall)
             }
             Column(modifier = Modifier.weight(0.56f)) {
                 Text("${extractTime(day.primeraChecada)} → ${extractTime(day.ultimaChecada)}", fontWeight = FontWeight.Bold)
-                Text(day.incidencias.joinToString(", ").ifBlank { "Sin incidencias" }, style = MaterialTheme.typography.caption, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(day.incidencias.joinToString(", ").ifBlank { "Sin incidencias" }, style = MaterialTheme.typography.labelSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             StatusPill(if (day.retardo) "Ret." else "OK", if (day.retardo) Guinda else Verde, modifier = Modifier.weight(0.20f))
         }
@@ -383,8 +384,8 @@ private fun LoadingRow(message: String) {
 
 @Composable
 private fun ErrorCard(message: String) {
-    Card(backgroundColor = MaterialTheme.colors.error.copy(alpha = 0.10f), modifier = Modifier.fillMaxWidth()) {
-        Text(message, color = MaterialTheme.colors.error, modifier = Modifier.padding(12.dp))
+    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.10f)), modifier = Modifier.fillMaxWidth()) {
+        Text(message, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(12.dp))
     }
 }
 
