@@ -199,22 +199,26 @@ private fun BiometricCompactRow(record: BiometricRecord) {
             modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Column(modifier = Modifier.weight(0.22f)) {
+            Column(modifier = Modifier.weight(0.24f)) {
                 Text(extractTime(record.hora), style = MaterialTheme.typography.subtitle1, fontWeight = FontWeight.Black, color = Guinda)
-                Text(formatDate(record.fecha), style = MaterialTheme.typography.caption)
+                Text(formatDateShort(record.fecha), style = MaterialTheme.typography.caption)
             }
-            Column(modifier = Modifier.weight(0.78f)) {
+            Column(modifier = Modifier.weight(0.56f)) {
                 Text(
-                    record.employee?.fullName ?: record.numEmpleado,
+                    record.employee?.fullName ?: "Empleado ${record.numEmpleado}",
                     style = MaterialTheme.typography.body2,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(record.employee?.numEmpleado ?: record.numEmpleado, style = MaterialTheme.typography.caption, color = Guinda)
-                    Text(record.location.ifBlank { "Sin ubicación" }, style = MaterialTheme.typography.caption, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                }
+                Text(
+                    "Registro biométrico",
+                    style = MaterialTheme.typography.caption,
+                    color = MaterialTheme.colors.onSurface.copy(alpha = 0.62f)
+                )
+            }
+            Column(modifier = Modifier.weight(0.20f)) {
+                StatusPill(record.employee?.numEmpleado ?: record.numEmpleado, Verde)
             }
         }
     }
