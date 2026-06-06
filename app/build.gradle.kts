@@ -67,4 +67,6 @@ dependencies {
     implementation(libs.retrofit.gson)
     implementation(libs.gson)
     implementation(libs.okhttp.logging)
+    implementation(libs.androidx.security.crypto)
+    implementation(libs.androidx.lifecycle.runtime.compose)
 }

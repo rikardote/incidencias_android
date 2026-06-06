@@ -187,7 +187,7 @@ private fun RecentBiometricTab(
         if (records.isEmpty()) {
             item { Text("No hay registros biométricos recientes.") }
         } else {
-            items(records) { BiometricCompactRow(it) }
+            items(records, key = { it.id }) { BiometricCompactRow(it) }
         }
     }
 }
@@ -255,7 +255,7 @@ private fun EmployeeAttendanceTab(
         }
 
         if (selectedEmployee == null) {
-            items(employees) { employee ->
+            items(employees, key = { it.id }) { employee ->
                 CompactEmployeeRow(employee = employee, onClick = { onEmployeeSelected(employee) })
             }
         }
@@ -277,7 +277,7 @@ private fun EmployeeAttendanceTab(
             item { Text("Sin asistencia para mostrar.") }
         } else {
             item { AttendanceSummary(rows) }
-            items(rows) { CompactAttendanceRow(it) }
+            items(rows, key = { it.date }) { CompactAttendanceRow(it) }
         }
     }
 }

@@ -205,7 +205,7 @@ private fun RecentTab(
         if (records.isEmpty()) {
             item { Text("No hay incidencias recientes.") }
         } else {
-            items(records) { record ->
+            items(records, key = { it.id }) { record ->
                 IncidenceCompactRow(
                     record = record,
                     canDelete = canDelete,
@@ -314,7 +314,7 @@ private fun SummaryTab(
                 modifier = Modifier.fillMaxWidth()
             )
         }
-        items(filteredDepartments) { dept ->
+        items(filteredDepartments, key = { it.id }) { dept ->
             CompactDepartmentRow(
                 department = dept,
                 selected = selectedDepartment?.id == dept.id,
@@ -325,7 +325,7 @@ private fun SummaryTab(
             item { Text("Sin datos de resumen para los filtros seleccionados.") }
         } else {
             item { SummaryTotals(summary) }
-            items(summary) { row -> SummaryCompactRow(row) }
+            items(summary, key = { it.code }) { row -> SummaryCompactRow(row) }
         }
     }
 }

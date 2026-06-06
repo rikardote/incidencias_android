@@ -208,7 +208,7 @@ private fun CaptureEmployeeStep(
                     }
                 }
             } else {
-                items(results) { EmployeeSelectCard(employee = it, onClick = { onSelected(it) }) }
+                items(results, key = { it.id }) { EmployeeSelectCard(employee = it, onClick = { onSelected(it) }) }
             }
         }
         if (!loading && query.length < 2) {
@@ -312,7 +312,7 @@ private fun CaptureCodeStep(
                     }
                 }
             } else {
-                items(filteredCodes) { code ->
+                items(filteredCodes, key = { it.id }) { code ->
                     CodeSelectCard(code = code, onClick = { onSelected(code) })
                 }
             }

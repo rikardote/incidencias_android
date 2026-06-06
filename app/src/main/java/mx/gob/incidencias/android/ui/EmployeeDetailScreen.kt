@@ -267,7 +267,7 @@ private fun IncidenciasTab(report: List<EmployeeReport>) {
 
     LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         item { IncidenciasSummary(report) }
-        items(report) { record -> IncidenciaCompactRow(record) }
+        items(report, key = { it.id }) { record -> IncidenciaCompactRow(record) }
     }
 }
 
@@ -281,7 +281,7 @@ private fun AsistenciaTab(attendance: AttendanceResponse?) {
 
     LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         item { AttendanceSummary(rows) }
-        items(rows) { day -> AttendanceCompactRow(day) }
+        items(rows, key = { it.date }) { day -> AttendanceCompactRow(day) }
     }
 }
 
@@ -294,7 +294,7 @@ private fun VacacionesTab(vacations: VacationResponse?) {
 
     LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         item { VacationSummary(vacations) }
-        items(vacations.periods) { period ->
+        items(vacations.periods, key = { it.period.id }) { period ->
             Card(elevation = 1.dp, modifier = Modifier.fillMaxWidth()) {
                 Row(modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     Column(modifier = Modifier.weight(0.42f)) {

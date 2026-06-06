@@ -1,11 +1,26 @@
 package mx.gob.incidencias.android.data.session
 
 import android.content.Context
+import android.content.SharedPreferences
 import androidx.core.content.edit
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKey
 import mx.gob.incidencias.android.BuildConfig
 
 class SessionStore(context: Context) {
-    private val prefs = context.getSharedPreferences("incidencias_session", Context.MODE_PRIVATE)
+    private val prefs: SharedPreferences by lazy {
+        val masterKey = MasterKey.Builder(context)
+            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+            .build()
+
+        EncryptedSharedPreferences.create(
+            context,
+            "incidencias_session_encrypted",
+            masterKey,
+            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+        )
+    }
 
     var apiUrl: String
         get() = prefs.getString(KEY_API_URL, BuildConfig.DEFAULT_API_URL).orEmpty().ifBlank { BuildConfig.DEFAULT_API_URL }

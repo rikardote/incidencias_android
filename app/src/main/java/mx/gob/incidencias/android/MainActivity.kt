@@ -380,7 +380,7 @@ private fun EmployeeSearchScreen(
                     }
                 }
             } else {
-                items(employees) { EmployeeCard(it, onClick = { onEmployeeSelected(it) }) }
+                items(employees, key = { it.id }) { EmployeeCard(it, onClick = { onEmployeeSelected(it) }) }
             }
         }
         if (!loading && query.length < 2) {
@@ -460,7 +460,7 @@ private fun RecentReportsScreen(
         if (loading) LoadingScreen("Cargando...")
         error?.let { ErrorCard(it) }
         LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(records) { record ->
+            items(records, key = { it.id }) { record ->
                 IncidenceCard(
                     record = record,
                     canDelete = canDelete,
@@ -533,7 +533,7 @@ private fun BiometricScreen(api: ApiService, onBack: () -> Unit) {
         if (loading) LoadingScreen("Cargando...")
         error?.let { ErrorCard(it) }
         LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(records) { BiometricCard(it) }
+            items(records, key = { it.id }) { BiometricCard(it) }
         }
     }
 }
