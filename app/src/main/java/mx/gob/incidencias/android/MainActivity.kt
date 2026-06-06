@@ -175,7 +175,11 @@ private fun IncidenciasApp(session: SessionStore) {
                 Screen.EmployeeDetail -> selectedEmployee?.let {
                     EmployeeDetailScreen(api = api, employee = it, onBack = { screen = Screen.Employees })
                 } ?: run { screen = Screen.Employees }
-                Screen.Reports -> RecentReportsScreen(api = api, onBack = { screen = Screen.Menu })
+                Screen.Reports -> RecentReportsScreen(
+                    api = api,
+                    canDelete = user?.canCapture == true,
+                    onBack = { screen = Screen.Menu }
+                )
                 Screen.Biometric -> BiometricScreen(api = api, onBack = { screen = Screen.Menu })
                 Screen.CapturePlaceholder -> CaptureScreen(api = api, onBackToMenu = { screen = Screen.Menu })
             }
@@ -333,11 +337,16 @@ private fun EmployeeCard(employee: Employee, onClick: () -> Unit) {
 }
 
 @Composable
-private fun RecentReportsScreen(api: ApiService, onBack: () -> Unit) {
+private fun RecentReportsScreen(
+    api: ApiService,
+    canDelete: Boolean,
+    onBack: () -> Unit
+) {
     val scope = rememberCoroutineScope()
     var loading by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     var records by remember { mutableStateOf<List<IncidenceRecord>>(emptyList()) }
+    var confirmDeleteToken by remember { mutableStateOf<String?>(null) }
 
     fun load() {
         scope.launch {
@@ -345,6 +354,20 @@ private fun RecentReportsScreen(api: ApiService, onBack: () -> Unit) {
             error = null
             runCatching { api.recentIncidencias(100).bodyOrThrow().data }
                 .onSuccess { records = it }
+                .onFailure { error = it.userMessage() }
+            loading = false
+        }
+    }
+
+    fun deleteByToken(token: String) {
+        scope.launch {
+            loading = true
+            error = null
+            runCatching { api.deleteIncidencia(token).bodyOrThrow() }
+                .onSuccess {
+                    confirmDeleteToken = null
+                    load()
+                }
                 .onFailure { error = it.userMessage() }
             loading = false
         }
@@ -359,19 +382,48 @@ private fun RecentReportsScreen(api: ApiService, onBack: () -> Unit) {
         if (loading) LoadingScreen("Cargando...")
         error?.let { ErrorCard(it) }
         LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(records) { IncidenceCard(it) }
+            items(records) { record ->
+                IncidenceCard(
+                    record = record,
+                    canDelete = canDelete,
+                    confirmDelete = confirmDeleteToken == record.token,
+                    onAskDelete = { confirmDeleteToken = record.token },
+                    onCancelDelete = { confirmDeleteToken = null },
+                    onConfirmDelete = { deleteByToken(record.token) }
+                )
+            }
         }
     }
 }
 
 @Composable
-private fun IncidenceCard(record: IncidenceRecord) {
+private fun IncidenceCard(
+    record: IncidenceRecord,
+    canDelete: Boolean,
+    confirmDelete: Boolean,
+    onAskDelete: () -> Unit,
+    onCancelDelete: () -> Unit,
+    onConfirmDelete: () -> Unit
+) {
     Card(elevation = 2.dp, modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(12.dp)) {
+        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(record.employee?.let { "${it.numEmpleado} - ${it.fullName}" } ?: "Sin empleado")
             Text("Código: ${record.codigo?.code.orEmpty()} ${record.codigo?.description.orEmpty()}")
             Text("${record.fechaInicio} a ${record.fechaFinal} · ${record.totalDias} días")
             if (record.fechaCapturado.isNotBlank()) Text("Capturado: ${record.fechaCapturado}", style = MaterialTheme.typography.caption)
+
+            if (canDelete && record.token.isNotBlank()) {
+                Spacer(Modifier.height(4.dp))
+                if (confirmDelete) {
+                    Text("¿Eliminar esta incidencia?", color = MaterialTheme.colors.error)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Button(onClick = onConfirmDelete) { Text("Sí, eliminar") }
+                        TextButton(onClick = onCancelDelete) { Text("Cancelar") }
+                    }
+                } else {
+                    TextButton(onClick = onAskDelete) { Text("Eliminar") }
+                }
+            }
         }
     }
 }

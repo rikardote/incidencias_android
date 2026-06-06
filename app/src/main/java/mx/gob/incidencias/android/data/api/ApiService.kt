@@ -19,6 +19,7 @@ import mx.gob.incidencias.android.data.model.User
 import mx.gob.incidencias.android.data.model.VacationResponse
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
@@ -54,6 +55,9 @@ interface ApiService {
 
     @POST("api/v1/incidencias")
     suspend fun storeIncidencia(@Body request: StoreIncidenciaRequest): Response<StoreIncidenciaResponse>
+
+    @DELETE("api/v1/incidencias/{token}")
+    suspend fun deleteIncidencia(@Path("token") token: String): Response<Map<String, Any>>
 
     @GET("api/v1/reports/recent")
     suspend fun recentIncidencias(@Query("limit") limit: Int = 100): Response<ListResponse<IncidenceRecord>>
