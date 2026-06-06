@@ -9,15 +9,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.Button
-import androidx.compose.material.Card
-import androidx.compose.material.CircularProgressIndicator
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.OutlinedTextField
-import androidx.compose.material.Tab
-import androidx.compose.material.TabRow
-import androidx.compose.material.Text
-import androidx.compose.material.TextButton
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -122,7 +123,7 @@ fun FullBiometricScreen(api: ApiService, onBack: () -> Unit) {
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         TextButton(onClick = onBack) { Text("← Menú") }
-        Text("Biométrico", style = MaterialTheme.typography.h5)
+        Text("Biométrico", style = MaterialTheme.typography.headlineSmall)
 
         TabRow(selectedTabIndex = selectedTab.ordinal) {
             BiometricTab.values().forEach { tab ->
@@ -194,28 +195,28 @@ private fun RecentBiometricTab(
 
 @Composable
 private fun BiometricCompactRow(record: BiometricRecord) {
-    Card(elevation = 1.dp, modifier = Modifier.fillMaxWidth()) {
+    Card(elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Column(modifier = Modifier.weight(0.24f)) {
-                Text(extractTime(record.hora), style = MaterialTheme.typography.subtitle1, fontWeight = FontWeight.Black, color = Guinda)
-                Text(formatDateShort(record.fecha), style = MaterialTheme.typography.caption)
+                Text(extractTime(record.hora), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black, color = Guinda)
+                Text(formatDateShort(record.fecha), style = MaterialTheme.typography.labelSmall)
             }
             Column(modifier = Modifier.weight(0.56f)) {
                 val nameParts = splitEmployeeName(record.employee?.fullName.orEmpty())
                 Text(
                     nameParts.surnames.ifBlank { "Empleado ${record.numEmpleado}" },
-                    style = MaterialTheme.typography.body2,
+                    style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
                     nameParts.names,
-                    style = MaterialTheme.typography.caption,
-                    color = MaterialTheme.colors.onSurface.copy(alpha = 0.72f),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.72f),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -290,7 +291,7 @@ private fun CompactEmployeeSearchCard(
     onQueryChange: (String) -> Unit,
     onSearch: () -> Unit
 ) {
-    Card(elevation = 2.dp, modifier = Modifier.fillMaxWidth()) {
+    Card(elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             if (selectedEmployee == null) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
@@ -307,7 +308,7 @@ private fun CompactEmployeeSearchCard(
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(selectedEmployee.fullName, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        Text(selectedEmployee.numEmpleado, style = MaterialTheme.typography.caption, color = Guinda)
+                        Text(selectedEmployee.numEmpleado, style = MaterialTheme.typography.labelSmall, color = Guinda)
                     }
                     TextButton(onClick = { onQueryChange("") }) { Text("Cambiar") }
                 }
@@ -318,12 +319,12 @@ private fun CompactEmployeeSearchCard(
 
 @Composable
 private fun CompactEmployeeRow(employee: Employee, onClick: () -> Unit) {
-    Card(elevation = 1.dp, modifier = Modifier.fillMaxWidth()) {
+    Card(elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), modifier = Modifier.fillMaxWidth()) {
         Row(modifier = Modifier.padding(10.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             StatusPill(employee.numEmpleado, Guinda)
             Column(modifier = Modifier.weight(1f)) {
                 Text(employee.fullName, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(employee.department?.description ?: "Sin departamento", style = MaterialTheme.typography.caption, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(employee.department?.description ?: "Sin departamento", style = MaterialTheme.typography.labelSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             Button(onClick = onClick) { Text("Elegir") }
         }
@@ -340,7 +341,7 @@ private fun CompactRangeCard(
     onEndChange: (String) -> Unit,
     onLoadAttendance: () -> Unit
 ) {
-    Card(elevation = 2.dp, modifier = Modifier.fillMaxWidth()) {
+    Card(elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                 DatePickerField("Inicio", startDate, onStartChange, Modifier.weight(1f))
@@ -366,21 +367,21 @@ private fun AttendanceSummary(rows: List<AttendanceDay>) {
 
 @Composable
 private fun CompactAttendanceRow(day: AttendanceDay) {
-    Card(elevation = 1.dp, modifier = Modifier.fillMaxWidth()) {
+    Card(elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Column(modifier = Modifier.weight(0.25f)) {
                 Text(formatDateShort(day.date), fontWeight = FontWeight.Black, color = Guinda)
-                Text("${day.numChecadas} chec.", style = MaterialTheme.typography.caption)
+                Text("${day.numChecadas} chec.", style = MaterialTheme.typography.labelSmall)
             }
             Column(modifier = Modifier.weight(0.55f)) {
                 Text("${extractTime(day.primeraChecada)} → ${extractTime(day.ultimaChecada)}", fontWeight = FontWeight.Bold)
                 if (day.incidencias.isNotEmpty()) {
-                    Text(day.incidencias.joinToString(", "), style = MaterialTheme.typography.caption, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(day.incidencias.joinToString(", "), style = MaterialTheme.typography.labelSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 } else {
-                    Text("Sin incidencias", style = MaterialTheme.typography.caption)
+                    Text("Sin incidencias", style = MaterialTheme.typography.labelSmall)
                 }
             }
             Column(modifier = Modifier.weight(0.20f)) {
@@ -400,8 +401,8 @@ private fun LoadingRow(message: String) {
 
 @Composable
 private fun ErrorCard(message: String) {
-    Card(backgroundColor = MaterialTheme.colors.error.copy(alpha = 0.10f), modifier = Modifier.fillMaxWidth()) {
-        Text(message, color = MaterialTheme.colors.error, modifier = Modifier.padding(12.dp))
+    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.10f)), modifier = Modifier.fillMaxWidth()) {
+        Text(message, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(12.dp))
     }
 }
 

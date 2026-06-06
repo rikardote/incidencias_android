@@ -9,15 +9,16 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.Button
-import androidx.compose.material.Card
-import androidx.compose.material.CircularProgressIndicator
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.OutlinedTextField
-import androidx.compose.material.Tab
-import androidx.compose.material.TabRow
-import androidx.compose.material.Text
-import androidx.compose.material.TextButton
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -139,7 +140,7 @@ fun ReportsScreen(
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         TextButton(onClick = onBack) { Text("← Menú") }
-        Text("Reportes", style = MaterialTheme.typography.h5)
+        Text("Reportes", style = MaterialTheme.typography.headlineSmall)
 
         TabRow(selectedTabIndex = selectedTab.ordinal) {
             ReportsTab.values().forEach { tab ->
@@ -228,12 +229,12 @@ private fun IncidenceCompactRow(
     onCancelDelete: () -> Unit,
     onConfirmDelete: () -> Unit
 ) {
-    Card(elevation = 1.dp, modifier = Modifier.fillMaxWidth()) {
+    Card(elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.weight(0.24f)) {
-                    Text(record.codigo?.code.orEmpty().ifBlank { "—" }, color = Guinda, fontWeight = FontWeight.Black, style = MaterialTheme.typography.subtitle1)
-                    Text(formatDateShort(record.fechaInicio), style = MaterialTheme.typography.caption)
+                    Text(record.codigo?.code.orEmpty().ifBlank { "—" }, color = Guinda, fontWeight = FontWeight.Black, style = MaterialTheme.typography.titleMedium)
+                    Text(formatDateShort(record.fechaInicio), style = MaterialTheme.typography.labelSmall)
                 }
                 Column(modifier = Modifier.weight(0.76f)) {
                     Text(
@@ -244,7 +245,7 @@ private fun IncidenceCompactRow(
                     )
                     Text(
                         "${record.employee?.numEmpleado.orEmpty()} · ${record.codigo?.description.orEmpty()}",
-                        style = MaterialTheme.typography.caption,
+                        style = MaterialTheme.typography.labelSmall,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -257,7 +258,7 @@ private fun IncidenceCompactRow(
             if (canDelete && record.token.isNotBlank()) {
                 if (confirmDelete) {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                        Text("¿Eliminar?", color = MaterialTheme.colors.error, modifier = Modifier.weight(1f))
+                        Text("¿Eliminar?", color = MaterialTheme.colorScheme.error, modifier = Modifier.weight(1f))
                         Button(onClick = onConfirmDelete) { Text("Sí") }
                         TextButton(onClick = onCancelDelete) { Text("No") }
                     }
@@ -300,7 +301,7 @@ private fun SummaryTab(
             )
         }
         item {
-            Text("Quincena", style = MaterialTheme.typography.subtitle1, fontWeight = FontWeight.Bold)
+            Text("Quincena", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         }
         item {
             CompactQnaSelector(qnas = qnas, selectedQna = selectedQna, onQnaSelected = onQnaSelected)
@@ -338,15 +339,15 @@ private fun CompactSelectedFilters(
     onReloadCatalogs: () -> Unit,
     loading: Boolean
 ) {
-    Card(elevation = 2.dp, modifier = Modifier.fillMaxWidth()) {
+    Card(elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("QNA", style = MaterialTheme.typography.caption, color = Guinda)
+                    Text("QNA", style = MaterialTheme.typography.labelSmall, color = Guinda)
                     Text(selectedQna?.description?.ifBlank { "${selectedQna.qna}/${selectedQna.year}" } ?: "Sin selección", maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("Depto.", style = MaterialTheme.typography.caption, color = Guinda)
+                    Text("Depto.", style = MaterialTheme.typography.labelSmall, color = Guinda)
                     Text(selectedDepartment?.let { "${it.code} - ${it.description}" } ?: "Sin selección", maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
             }
@@ -383,7 +384,7 @@ private fun CompactQnaSelector(qnas: List<Qna>, selectedQna: Qna?, onQnaSelected
 
 @Composable
 private fun CompactDepartmentRow(department: Department, selected: Boolean, onClick: () -> Unit) {
-    Card(elevation = if (selected) 3.dp else 1.dp, modifier = Modifier.fillMaxWidth()) {
+    Card(elevation = CardDefaults.cardElevation(defaultElevation = if (selected) 3.dp else 1.dp), modifier = Modifier.fillMaxWidth()) {
         Row(modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             StatusPill(department.code, if (selected) Guinda else Verde)
             Text(department.description, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -405,15 +406,15 @@ private fun SummaryTotals(summary: List<QnaSummary>) {
 
 @Composable
 private fun SummaryCompactRow(row: QnaSummary) {
-    Card(elevation = 1.dp, modifier = Modifier.fillMaxWidth()) {
+    Card(elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), modifier = Modifier.fillMaxWidth()) {
         Row(modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Column(modifier = Modifier.weight(0.20f)) {
-                Text(row.code, color = Guinda, fontWeight = FontWeight.Black, style = MaterialTheme.typography.subtitle1)
-                Text("${row.registros} reg.", style = MaterialTheme.typography.caption)
+                Text(row.code, color = Guinda, fontWeight = FontWeight.Black, style = MaterialTheme.typography.titleMedium)
+                Text("${row.registros} reg.", style = MaterialTheme.typography.labelSmall)
             }
             Column(modifier = Modifier.weight(0.62f)) {
                 Text(row.description, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text("Días acumulados", style = MaterialTheme.typography.caption)
+                Text("Días acumulados", style = MaterialTheme.typography.labelSmall)
             }
             StatusPill("${formatDias(row.dias)} d", Oro, modifier = Modifier.weight(0.18f))
         }
@@ -430,8 +431,8 @@ private fun LoadingRow(message: String) {
 
 @Composable
 private fun ErrorCard(message: String) {
-    Card(backgroundColor = MaterialTheme.colors.error.copy(alpha = 0.10f), modifier = Modifier.fillMaxWidth()) {
-        Text(message, color = MaterialTheme.colors.error, modifier = Modifier.padding(12.dp))
+    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.10f)), modifier = Modifier.fillMaxWidth()) {
+        Text(message, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(12.dp))
     }
 }
 
