@@ -26,6 +26,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -35,8 +36,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
@@ -214,27 +217,26 @@ private fun LoginScreen(
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
-    LazyColumn(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    LazyColumn(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        item {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                StatusPill("v${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})", Verde)
+            }
+        }
         item {
             HeroHeader(
-                title = "Sistema de Incidencias",
-                subtitle = "Acceso móvil seguro para captura y consulta",
+                title = "Incidencias",
+                subtitle = "Captura, consulta y seguimiento institucional desde el móvil",
                 icon = "🏛️"
             )
         }
+        item { LoginTrustStrip() }
         item {
             SectionCard(
-                title = "Iniciar sesión",
-                subtitle = "Usa la misma cuenta del sistema web"
+                title = "Acceso seguro",
+                subtitle = "Ingresa con tu cuenta institucional"
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    OutlinedTextField(
-                        value = apiUrl,
-                        onValueChange = { apiUrl = it },
-                        label = { Text("URL API") },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
-                    )
                     OutlinedTextField(
                         value = username,
                         onValueChange = { username = it },
@@ -251,24 +253,25 @@ private fun LoginScreen(
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                         modifier = Modifier.fillMaxWidth()
                     )
+                    OutlinedTextField(
+                        value = apiUrl,
+                        onValueChange = { apiUrl = it },
+                        label = { Text("Servidor API") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
                     Button(
                         enabled = apiUrl.isNotBlank() && username.isNotBlank() && password.isNotBlank(),
                         onClick = { onLogin(apiUrl, username, password) },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Entrar")
+                        Text("Entrar al sistema", fontWeight = FontWeight.Bold)
                     }
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            "Emulador: http://10.0.2.2:8190/",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        StatusPill("v${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})", Verde)
-                    }
+                    Text(
+                        "Ambiente emulador: http://10.0.2.2:8190/",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
         }
@@ -287,30 +290,30 @@ private fun MenuScreen(
     LazyColumn(verticalArrangement = Arrangement.spacedBy(14.dp)) {
         item {
             HeroHeader(
-                title = "Bienvenido",
-                subtitle = "${user?.name.orEmpty()} · ${user?.type.orEmpty()}",
+                title = "Panel principal",
+                subtitle = user?.name.orEmpty().ifBlank { "Sistema de incidencias" },
                 icon = "👋"
             )
         }
+        item { UserOverviewCard(user) }
         item {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (user?.canCapture == true) {
-                    StatusPill("Captura habilitada", Verde)
-                } else {
-                    StatusPill("Solo consulta", Oro)
-                }
-            }
-        }
-        item {
-            ActionCard("Buscar empleados", "Consulta expediente, asistencia e incidencias", "👤", VerdeDark, onEmployees)
+            Text(
+                "Acciones",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Black,
+                color = MaterialTheme.colorScheme.onSurface
+            )
         }
         if (user?.canCapture == true) {
             item {
-                ActionCard("Capturar incidencia", "Registro guiado con formularios dinámicos", "📝", Guinda, onCapture)
+                ActionCard("Capturar incidencia", "Flujo guiado: empleado, código y formulario dinámico", "📝", Guinda, onCapture)
             }
         }
         item {
-            ActionCard("Reportes", "Recientes y resumen por quincena", "📊", Oro, onReports)
+            ActionCard("Buscar empleados", "Expediente, incidencias, asistencia y vacaciones", "👤", VerdeDark, onEmployees)
+        }
+        item {
+            ActionCard("Reportes", "Registros recientes y resumen por quincena", "📊", Oro, onReports)
         }
         item {
             ActionCard("Biométrico", "Checadas recientes y asistencia por empleado", "🕐", Verde, onBiometric)
@@ -318,6 +321,56 @@ private fun MenuScreen(
         item {
             TextButton(onClick = onLogout, modifier = Modifier.fillMaxWidth()) {
                 Text("Cerrar sesión")
+            }
+        }
+    }
+}
+
+@Composable
+private fun LoginTrustStrip() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.58f))
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            StatusPill("Token cifrado", Verde)
+            StatusPill("API Laravel", Guinda)
+            StatusPill("Móvil", Oro)
+        }
+    }
+}
+
+@Composable
+private fun UserOverviewCard(user: User?) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("Sesión activa", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(user?.name.orEmpty().ifBlank { "Usuario" }, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black)
+                }
+                StatusPill(user?.type.orEmpty().ifBlank { "Perfil" }, Guinda)
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                if (user?.canCapture == true) {
+                    StatusPill("Captura habilitada", Verde)
+                } else {
+                    StatusPill("Solo consulta", Oro)
+                }
+                StatusPill("v${BuildConfig.VERSION_NAME}", VerdeDark)
             }
         }
     }
