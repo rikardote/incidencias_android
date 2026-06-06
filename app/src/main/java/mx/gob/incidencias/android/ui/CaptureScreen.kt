@@ -1,6 +1,7 @@
 package mx.gob.incidencias.android.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,6 +19,7 @@ import androidx.compose.material.Button
 import androidx.compose.material.Card
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Divider
+import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
@@ -46,6 +48,8 @@ import mx.gob.incidencias.android.data.model.IncidenceCode
 import mx.gob.incidencias.android.data.model.Periodo
 import mx.gob.incidencias.android.data.model.StoreIncidenciaRequest
 import mx.gob.incidencias.android.ui.components.DatePickerField
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowForward
 import mx.gob.incidencias.android.ui.components.HeroHeader
 import mx.gob.incidencias.android.ui.components.StatusPill
 import mx.gob.incidencias.android.ui.theme.Guinda
@@ -387,19 +391,15 @@ private fun CaptureFormStep(
     var loading by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
 
-    fun loadDoctors() {
-        scope.launch {
-            if (doctorQuery.isBlank()) {
-                error = "Escribe nombre o numero del medico"
-                return@launch
-            }
-            loading = true
-            error = null
-            runCatching { api.doctors(doctorQuery).bodyOrThrow().data }
-                .onSuccess { doctors = it }
-                .onFailure { error = it.userMessage() }
-            loading = false
+    // Autocomplete para médicos
+    LaunchedEffect(doctorQuery) {
+        if (doctorQuery.length < 2) {
+            doctors = emptyList()
+            return@LaunchedEffect
         }
+        kotlinx.coroutines.delay(300)
+        runCatching { api.doctors(doctorQuery).bodyOrThrow().data }
+            .onSuccess { doctors = it }
     }
 
     fun loadPeriods() {
@@ -478,26 +478,101 @@ private fun CaptureFormStep(
         if (requiresIncapacity) {
             item {
                 CaptureSectionCard(title = "Informacion medica", subtitle = "Datos requeridos para incapacidades") {
-                    Text(selectedDoctor?.let { "Medico seleccionado: ${it.numEmpleado} - ${it.fullName}" } ?: "Selecciona medico")
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                        OutlinedTextField(
-                            value = doctorQuery,
-                            onValueChange = {
-                                doctorQuery = it
-                                selectedDoctor = null
-                            },
-                            label = { Text("Medico") },
-                            singleLine = true,
-                            modifier = Modifier.weight(1f)
-                        )
-                        Button(onClick = ::loadDoctors, enabled = !loading) { Text("Buscar") }
+                    // Médico seleccionado
+                    if (selectedDoctor != null) {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            backgroundColor = Guinda.copy(alpha = 0.1f)
+                        ) {
+                            Column(modifier = Modifier.padding(12.dp)) {
+                                Text(
+                                    text = "Médico seleccionado",
+                                    style = MaterialTheme.typography.caption,
+                                    color = Guinda
+                                )
+                                Text(
+                                    text = "${selectedDoctor!!.numEmpleado} - ${selectedDoctor!!.fullName}",
+                                    style = MaterialTheme.typography.h6,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                TextButton(onClick = {
+                                    selectedDoctor = null
+                                    doctorQuery = ""
+                                    doctors = emptyList()
+                                }) {
+                                    Text("Cambiar médico")
+                                }
+                            }
+                        }
+                        Spacer(Modifier.height(8.dp))
                     }
-                    doctors.take(5).forEach { doctor ->
-                        TextButton(onClick = { selectedDoctor = doctor }, modifier = Modifier.fillMaxWidth()) {
-                            Text("${doctor.numEmpleado} - ${doctor.fullName}")
+
+                    // Búsqueda de médico
+                    OutlinedTextField(
+                        value = doctorQuery,
+                        onValueChange = {
+                            doctorQuery = it
+                            if (selectedDoctor != null && it != selectedDoctor!!.fullName) {
+                                selectedDoctor = null
+                            }
+                        },
+                        label = { Text(if (selectedDoctor == null) "Buscar médico" else "Médico") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+
+                    // Resultados de búsqueda
+                    if (doctorQuery.length >= 2 && selectedDoctor == null) {
+                        Spacer(Modifier.height(8.dp))
+                        if (doctors.isEmpty()) {
+                            Text(
+                                text = "No se encontraron médicos",
+                                style = MaterialTheme.typography.body2,
+                                color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f)
+                            )
+                        } else {
+                            doctors.forEach { doctor ->
+                                Card(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 4.dp)
+                                        .clickable {
+                                            selectedDoctor = doctor
+                                            doctorQuery = doctor.fullName
+                                        },
+                                    backgroundColor = Verde.copy(alpha = 0.1f)
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(12.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = doctor.numEmpleado,
+                                                style = MaterialTheme.typography.caption,
+                                                color = Verde
+                                            )
+                                            Text(
+                                                text = doctor.fullName,
+                                                style = MaterialTheme.typography.body1,
+                                                fontWeight = FontWeight.SemiBold
+                                            )
+                                        }
+                                        Icon(
+                                            imageVector = Icons.Default.ArrowForward,
+                                            contentDescription = "Seleccionar",
+                                            tint = Verde
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
-                    Divider(modifier = Modifier.padding(vertical = 8.dp))
+
+                    Spacer(Modifier.height(16.dp))
+                    Divider()
+                    Spacer(Modifier.height(16.dp))
+
                     DatePickerField(label = "Fecha expedida", value = fechaExpedida, onValueChange = { fechaExpedida = it })
                     Spacer(Modifier.height(8.dp))
                     OutlinedTextField(
