@@ -66,6 +66,7 @@ fun EmployeeDetailScreen(
     var incidenceEnd by remember { mutableStateOf(initialIncidenceRange.second) }
     var attendanceStart by remember { mutableStateOf(initialAttendanceRange.first) }
     var attendanceEnd by remember { mutableStateOf(initialAttendanceRange.second) }
+    var showFilters by remember { mutableStateOf(false) }
 
     fun load() {
         scope.launch {
@@ -101,28 +102,44 @@ fun EmployeeDetailScreen(
         }
     }
 
+    fun applyFilters() {
+        load()
+        showFilters = false
+    }
+
     LaunchedEffect(employee.id) { load() }
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             TextButton(onClick = onBack) { Text("← Búsqueda") }
             Button(onClick = ::load, enabled = !loading) { Text("Recargar") }
+            TextButton(onClick = { showFilters = !showFilters }) { Text(if (showFilters) "Ocultar filtros" else "Filtros") }
         }
 
         EmployeeHeader(employee)
 
-        FilterCard(
-            incidenceStart = incidenceStart,
-            incidenceEnd = incidenceEnd,
-            attendanceStart = attendanceStart,
-            attendanceEnd = attendanceEnd,
-            onIncidenceStartChange = { incidenceStart = it },
-            onIncidenceEndChange = { incidenceEnd = it },
-            onAttendanceStartChange = { attendanceStart = it },
-            onAttendanceEndChange = { attendanceEnd = it },
-            onApply = ::load,
-            loading = loading
-        )
+        if (showFilters) {
+            FilterCard(
+                incidenceStart = incidenceStart,
+                incidenceEnd = incidenceEnd,
+                attendanceStart = attendanceStart,
+                attendanceEnd = attendanceEnd,
+                onIncidenceStartChange = { incidenceStart = it },
+                onIncidenceEndChange = { incidenceEnd = it },
+                onAttendanceStartChange = { attendanceStart = it },
+                onAttendanceEndChange = { attendanceEnd = it },
+                onApply = ::applyFilters,
+                loading = loading
+            )
+        } else {
+            FilterSummary(
+                incidenceStart = incidenceStart,
+                incidenceEnd = incidenceEnd,
+                attendanceStart = attendanceStart,
+                attendanceEnd = attendanceEnd,
+                onShowFilters = { showFilters = true }
+            )
+        }
 
         TabRow(selectedTabIndex = selectedTab.ordinal) {
             DetailTab.values().forEach { tab ->
@@ -155,6 +172,28 @@ private fun EmployeeHeader(employee: Employee) {
             Text("Puesto: ${employee.puesto.ifBlank { "—" }}")
             val horario = listOf(employee.horario, employee.jornada).filter { it.isNotBlank() }.joinToString(" · ")
             if (horario.isNotBlank()) Text(horario, style = MaterialTheme.typography.caption)
+        }
+    }
+}
+
+@Composable
+private fun FilterSummary(
+    incidenceStart: String,
+    incidenceEnd: String,
+    attendanceStart: String,
+    attendanceEnd: String,
+    onShowFilters: () -> Unit
+) {
+    Card(elevation = 1.dp, modifier = Modifier.fillMaxWidth()) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text("Rangos activos", style = MaterialTheme.typography.caption, color = MaterialTheme.colors.onSurface.copy(alpha = 0.65f))
+                Text("Inc: ${shortRange(incidenceStart, incidenceEnd)} · Asist: ${shortRange(attendanceStart, attendanceEnd)}", style = MaterialTheme.typography.caption)
+            }
+            TextButton(onClick = onShowFilters) { Text("Cambiar") }
         }
     }
 }
@@ -317,6 +356,14 @@ private fun dateRange(monthsBack: Int = 0, daysBack: Int = 0): Pair<String, Stri
     if (monthsBack > 0) start.add(Calendar.MONTH, -monthsBack)
     if (daysBack > 0) start.add(Calendar.DAY_OF_YEAR, -daysBack)
     return formatter.format(start.time) to formatter.format(end.time)
+}
+
+private fun shortRange(start: String, end: String): String = "${formatDateShort(start)}-${formatDateShort(end)}"
+
+private fun formatDateShort(value: String?): String {
+    if (value.isNullOrBlank()) return "—"
+    val parts = value.substringBefore(" ").split("-")
+    return if (parts.size == 3) "${parts[2]}/${parts[1]}" else value
 }
 
 private fun formatDate(value: String?): String {

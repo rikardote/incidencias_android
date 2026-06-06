@@ -11,7 +11,7 @@ Cliente Android nativo para consumir la API Laravel `/api/v1` del sistema de inc
 - Menú principal con permisos `can_capture`.
 - Búsqueda de empleados.
 - Detalle de empleado con pestañas de incidencias, asistencia y vacaciones.
-- Filtros de fecha para incidencias y asistencia en detalle de empleado.
+- Filtros de fecha opcionales/colapsables para incidencias y asistencia en detalle de empleado.
 - Incidencias recientes.
 - Eliminación de incidencias por token desde recientes para usuarios con captura.
 - Reporte resumen por quincena y departamento.
