@@ -13,6 +13,7 @@ import androidx.compose.material.Button
 import androidx.compose.material.Card
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Tab
 import androidx.compose.material.TabRow
 import androidx.compose.material.Text
@@ -59,19 +60,36 @@ fun EmployeeDetailScreen(
     var report by remember { mutableStateOf<List<EmployeeReport>>(emptyList()) }
     var attendance by remember { mutableStateOf<AttendanceResponse?>(null) }
     var vacations by remember { mutableStateOf<VacationResponse?>(null) }
+    val initialIncidenceRange = remember { dateRange(monthsBack = 6) }
+    val initialAttendanceRange = remember { dateRange(daysBack = 15) }
+    var incidenceStart by remember { mutableStateOf(initialIncidenceRange.first) }
+    var incidenceEnd by remember { mutableStateOf(initialIncidenceRange.second) }
+    var attendanceStart by remember { mutableStateOf(initialAttendanceRange.first) }
+    var attendanceEnd by remember { mutableStateOf(initialAttendanceRange.second) }
 
     fun load() {
         scope.launch {
+            val normalizedIncidenceStart = normalizeDateInput(incidenceStart)
+            val normalizedIncidenceEnd = normalizeDateInput(incidenceEnd)
+            val normalizedAttendanceStart = normalizeDateInput(attendanceStart)
+            val normalizedAttendanceEnd = normalizeDateInput(attendanceEnd)
+            if (normalizedIncidenceStart == null || normalizedIncidenceEnd == null || normalizedAttendanceStart == null || normalizedAttendanceEnd == null) {
+                error = "Las fechas deben tener formato YYYY-MM-DD o YYYYMMDD"
+                return@launch
+            }
+            incidenceStart = normalizedIncidenceStart
+            incidenceEnd = normalizedIncidenceEnd
+            attendanceStart = normalizedAttendanceStart
+            attendanceEnd = normalizedAttendanceEnd
+
             loading = true
             error = null
-            val incidenceRange = dateRange(monthsBack = 6)
-            val attendanceRange = dateRange(daysBack = 15)
 
-            runCatching { api.employeeReport(employee.id, incidenceRange.first, incidenceRange.second).bodyOrThrow().data }
+            runCatching { api.employeeReport(employee.id, normalizedIncidenceStart, normalizedIncidenceEnd).bodyOrThrow().data }
                 .onSuccess { report = it }
                 .onFailure { error = "Incidencias: ${it.userMessage()}" }
 
-            runCatching { api.employeeAttendance(employee.id, attendanceRange.first, attendanceRange.second).bodyOrThrow() }
+            runCatching { api.employeeAttendance(employee.id, normalizedAttendanceStart, normalizedAttendanceEnd).bodyOrThrow() }
                 .onSuccess { attendance = it }
                 .onFailure { if (error == null) error = "Asistencia: ${it.userMessage()}" }
 
@@ -92,6 +110,19 @@ fun EmployeeDetailScreen(
         }
 
         EmployeeHeader(employee)
+
+        FilterCard(
+            incidenceStart = incidenceStart,
+            incidenceEnd = incidenceEnd,
+            attendanceStart = attendanceStart,
+            attendanceEnd = attendanceEnd,
+            onIncidenceStartChange = { incidenceStart = it },
+            onIncidenceEndChange = { incidenceEnd = it },
+            onAttendanceStartChange = { attendanceStart = it },
+            onAttendanceEndChange = { attendanceEnd = it },
+            onApply = ::load,
+            loading = loading
+        )
 
         TabRow(selectedTabIndex = selectedTab.ordinal) {
             DetailTab.values().forEach { tab ->
@@ -124,6 +155,64 @@ private fun EmployeeHeader(employee: Employee) {
             Text("Puesto: ${employee.puesto.ifBlank { "—" }}")
             val horario = listOf(employee.horario, employee.jornada).filter { it.isNotBlank() }.joinToString(" · ")
             if (horario.isNotBlank()) Text(horario, style = MaterialTheme.typography.caption)
+        }
+    }
+}
+
+@Composable
+private fun FilterCard(
+    incidenceStart: String,
+    incidenceEnd: String,
+    attendanceStart: String,
+    attendanceEnd: String,
+    onIncidenceStartChange: (String) -> Unit,
+    onIncidenceEndChange: (String) -> Unit,
+    onAttendanceStartChange: (String) -> Unit,
+    onAttendanceEndChange: (String) -> Unit,
+    onApply: () -> Unit,
+    loading: Boolean
+) {
+    Card(elevation = 2.dp, modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("Filtros", style = MaterialTheme.typography.h6)
+            Text("Incidencias", style = MaterialTheme.typography.subtitle2)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                OutlinedTextField(
+                    value = incidenceStart,
+                    onValueChange = onIncidenceStartChange,
+                    label = { Text("Inicio") },
+                    singleLine = true,
+                    modifier = Modifier.weight(1f)
+                )
+                OutlinedTextField(
+                    value = incidenceEnd,
+                    onValueChange = onIncidenceEndChange,
+                    label = { Text("Fin") },
+                    singleLine = true,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            Text("Asistencia", style = MaterialTheme.typography.subtitle2)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                OutlinedTextField(
+                    value = attendanceStart,
+                    onValueChange = onAttendanceStartChange,
+                    label = { Text("Inicio") },
+                    singleLine = true,
+                    modifier = Modifier.weight(1f)
+                )
+                OutlinedTextField(
+                    value = attendanceEnd,
+                    onValueChange = onAttendanceEndChange,
+                    label = { Text("Fin") },
+                    singleLine = true,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            Button(onClick = onApply, enabled = !loading, modifier = Modifier.fillMaxWidth()) {
+                Text("Aplicar filtros")
+            }
+            Text("Formato: YYYY-MM-DD o YYYYMMDD", style = MaterialTheme.typography.caption)
         }
     }
 }
@@ -239,6 +328,15 @@ private fun formatDate(value: String?): String {
     val date = value.substringBefore(" ")
     val parts = date.split("-")
     return if (parts.size == 3 && parts[0].length == 4) "${parts[2]}-${parts[1]}-${parts[0]}" else value
+}
+
+private fun normalizeDateInput(value: String): String? {
+    val trimmed = value.trim()
+    if (trimmed.isBlank()) return null
+    val normalized = if (Regex("^\\d{8}$").matches(trimmed)) {
+        "${trimmed.substring(0, 4)}-${trimmed.substring(4, 6)}-${trimmed.substring(6, 8)}"
+    } else trimmed
+    return normalized.takeIf { Regex("^\\d{4}-\\d{2}-\\d{2}$").matches(it) }
 }
 
 private fun extractTime(value: String?): String {
