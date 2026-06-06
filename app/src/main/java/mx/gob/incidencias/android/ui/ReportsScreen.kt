@@ -26,6 +26,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import mx.gob.incidencias.android.data.api.ApiException
@@ -35,6 +37,10 @@ import mx.gob.incidencias.android.data.model.Department
 import mx.gob.incidencias.android.data.model.IncidenceRecord
 import mx.gob.incidencias.android.data.model.Qna
 import mx.gob.incidencias.android.data.model.QnaSummary
+import mx.gob.incidencias.android.ui.components.StatusPill
+import mx.gob.incidencias.android.ui.theme.Guinda
+import mx.gob.incidencias.android.ui.theme.Oro
+import mx.gob.incidencias.android.ui.theme.Verde
 import java.util.Locale
 
 private enum class ReportsTab(val title: String) {
@@ -189,15 +195,18 @@ private fun RecentTab(
     onConfirmDelete: (String) -> Unit,
     loading: Boolean
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Button(onClick = onReload, enabled = !loading) { Text("Recargar") }
-        if (records.isEmpty()) {
-            Text("No hay incidencias recientes.")
-            return@Column
+    LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        item {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                Button(onClick = onReload, enabled = !loading, modifier = Modifier.weight(1f)) { Text("Recargar") }
+                StatusPill("${records.size} registros", Verde, modifier = Modifier.padding(top = 2.dp))
+            }
         }
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        if (records.isEmpty()) {
+            item { Text("No hay incidencias recientes.") }
+        } else {
             items(records) { record ->
-                IncidenceCard(
+                IncidenceCompactRow(
                     record = record,
                     canDelete = canDelete,
                     confirmDelete = confirmDeleteToken == record.token,
@@ -211,7 +220,7 @@ private fun RecentTab(
 }
 
 @Composable
-private fun IncidenceCard(
+private fun IncidenceCompactRow(
     record: IncidenceRecord,
     canDelete: Boolean,
     confirmDelete: Boolean,
@@ -219,23 +228,41 @@ private fun IncidenceCard(
     onCancelDelete: () -> Unit,
     onConfirmDelete: () -> Unit
 ) {
-    Card(elevation = 2.dp, modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(record.employee?.let { "${it.numEmpleado} - ${it.fullName}" } ?: "Sin empleado")
-            Text("Código: ${record.codigo?.code.orEmpty()} ${record.codigo?.description.orEmpty()}")
-            Text("${record.fechaInicio} a ${record.fechaFinal} · ${formatDias(record.totalDias)} días")
-            if (record.fechaCapturado.isNotBlank()) Text("Capturado: ${record.fechaCapturado}", style = MaterialTheme.typography.caption)
+    Card(elevation = 1.dp, modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.weight(0.24f)) {
+                    Text(record.codigo?.code.orEmpty().ifBlank { "—" }, color = Guinda, fontWeight = FontWeight.Black, style = MaterialTheme.typography.subtitle1)
+                    Text(formatDateShort(record.fechaInicio), style = MaterialTheme.typography.caption)
+                }
+                Column(modifier = Modifier.weight(0.76f)) {
+                    Text(
+                        record.employee?.fullName ?: "Sin empleado",
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        "${record.employee?.numEmpleado.orEmpty()} · ${record.codigo?.description.orEmpty()}",
+                        style = MaterialTheme.typography.caption,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+                Column {
+                    StatusPill("${formatDias(record.totalDias)} d", Oro)
+                }
+            }
 
             if (canDelete && record.token.isNotBlank()) {
-                Spacer(Modifier.height(4.dp))
                 if (confirmDelete) {
-                    Text("¿Eliminar esta incidencia?", color = MaterialTheme.colors.error)
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Button(onClick = onConfirmDelete) { Text("Sí, eliminar") }
-                        TextButton(onClick = onCancelDelete) { Text("Cancelar") }
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                        Text("¿Eliminar?", color = MaterialTheme.colors.error, modifier = Modifier.weight(1f))
+                        Button(onClick = onConfirmDelete) { Text("Sí") }
+                        TextButton(onClick = onCancelDelete) { Text("No") }
                     }
                 } else {
-                    TextButton(onClick = onAskDelete) { Text("Eliminar") }
+                    TextButton(onClick = onAskDelete, modifier = Modifier.fillMaxWidth()) { Text("Eliminar") }
                 }
             }
         }
@@ -262,68 +289,133 @@ private fun SummaryTab(
         filter.isBlank() || dept.description.contains(filter, ignoreCase = true) || dept.code.contains(filter, ignoreCase = true)
     }.take(20)
 
-    LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         item {
-            Button(onClick = onReloadCatalogs, enabled = !loading, modifier = Modifier.fillMaxWidth()) { Text("Recargar catálogos") }
+            CompactSelectedFilters(
+                selectedQna = selectedQna,
+                selectedDepartment = selectedDepartment,
+                onApply = onApply,
+                onReloadCatalogs = onReloadCatalogs,
+                loading = loading
+            )
         }
         item {
-            FilterSelectorCard(title = "Quincena") {
-                Text(selectedQna?.let { "Seleccionada: ${it.description.ifBlank { "${it.qna}/${it.year}" }}" } ?: "Sin selección")
-                qnas.take(12).forEach { qna ->
-                    TextButton(onClick = { onQnaSelected(qna) }, modifier = Modifier.fillMaxWidth()) {
-                        Text(qna.description.ifBlank { "${qna.qna}/${qna.year}" } + if (qna.active) " · activa" else "")
-                    }
-                }
-            }
+            Text("Quincena", style = MaterialTheme.typography.subtitle1, fontWeight = FontWeight.Bold)
         }
         item {
-            FilterSelectorCard(title = "Departamento") {
-                Text(selectedDepartment?.let { "Seleccionado: ${it.code} - ${it.description}" } ?: "Sin selección")
-                OutlinedTextField(
-                    value = departmentFilter,
-                    onValueChange = onDepartmentFilterChange,
-                    label = { Text("Filtrar departamento") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                filteredDepartments.forEach { dept ->
-                    TextButton(onClick = { onDepartmentSelected(dept) }, modifier = Modifier.fillMaxWidth()) {
-                        Text("${dept.code} - ${dept.description}")
-                    }
-                }
-            }
+            CompactQnaSelector(qnas = qnas, selectedQna = selectedQna, onQnaSelected = onQnaSelected)
         }
         item {
-            Button(onClick = onApply, enabled = !loading, modifier = Modifier.fillMaxWidth()) {
-                Text("Consultar resumen")
-            }
+            OutlinedTextField(
+                value = departmentFilter,
+                onValueChange = onDepartmentFilterChange,
+                label = { Text("Filtrar departamento") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+        items(filteredDepartments) { dept ->
+            CompactDepartmentRow(
+                department = dept,
+                selected = selectedDepartment?.id == dept.id,
+                onClick = { onDepartmentSelected(dept) }
+            )
         }
         if (summary.isEmpty()) {
             item { Text("Sin datos de resumen para los filtros seleccionados.") }
         } else {
-            item { Text("Resumen", style = MaterialTheme.typography.h6) }
-            items(summary) { row -> SummaryCard(row) }
+            item { SummaryTotals(summary) }
+            items(summary) { row -> SummaryCompactRow(row) }
         }
     }
 }
 
 @Composable
-private fun FilterSelectorCard(title: String, content: @Composable () -> Unit) {
+private fun CompactSelectedFilters(
+    selectedQna: Qna?,
+    selectedDepartment: Department?,
+    onApply: () -> Unit,
+    onReloadCatalogs: () -> Unit,
+    loading: Boolean
+) {
     Card(elevation = 2.dp, modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(title, style = MaterialTheme.typography.h6)
-            content()
+        Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("QNA", style = MaterialTheme.typography.caption, color = Guinda)
+                    Text(selectedQna?.description?.ifBlank { "${selectedQna.qna}/${selectedQna.year}" } ?: "Sin selección", maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("Depto.", style = MaterialTheme.typography.caption, color = Guinda)
+                    Text(selectedDepartment?.let { "${it.code} - ${it.description}" } ?: "Sin selección", maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                Button(onClick = onApply, enabled = !loading, modifier = Modifier.weight(1f)) { Text("Consultar") }
+                TextButton(onClick = onReloadCatalogs, enabled = !loading, modifier = Modifier.weight(1f)) { Text("Actualizar") }
+            }
         }
     }
 }
 
 @Composable
-private fun SummaryCard(row: QnaSummary) {
-    Card(elevation = 2.dp, modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text("${row.code} - ${row.description}", style = MaterialTheme.typography.subtitle1)
-            Text("Registros: ${row.registros}")
-            Text("Días: ${formatDias(row.dias)}")
+private fun CompactQnaSelector(qnas: List<Qna>, selectedQna: Qna?, onQnaSelected: (Qna) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        qnas.take(8).chunked(2).forEach { row ->
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
+                row.forEach { qna ->
+                    val selected = selectedQna?.id == qna.id
+                    if (selected) {
+                        Button(onClick = { onQnaSelected(qna) }, modifier = Modifier.weight(1f)) {
+                            Text(qna.description.ifBlank { "${qna.qna}/${qna.year}" }, maxLines = 1)
+                        }
+                    } else {
+                        TextButton(onClick = { onQnaSelected(qna) }, modifier = Modifier.weight(1f)) {
+                            Text(qna.description.ifBlank { "${qna.qna}/${qna.year}" }, maxLines = 1)
+                        }
+                    }
+                }
+                if (row.size == 1) Spacer(Modifier.weight(1f))
+            }
+        }
+    }
+}
+
+@Composable
+private fun CompactDepartmentRow(department: Department, selected: Boolean, onClick: () -> Unit) {
+    Card(elevation = if (selected) 3.dp else 1.dp, modifier = Modifier.fillMaxWidth()) {
+        Row(modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            StatusPill(department.code, if (selected) Guinda else Verde)
+            Text(department.description, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
+            TextButton(onClick = onClick) { Text(if (selected) "✓" else "Elegir") }
+        }
+    }
+}
+
+@Composable
+private fun SummaryTotals(summary: List<QnaSummary>) {
+    val registros = summary.sumOf { it.registros }
+    val dias = summary.sumOf { it.dias }
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+        StatusPill("${summary.size} códigos", Verde)
+        StatusPill("$registros registros", Guinda)
+        StatusPill("${formatDias(dias)} días", Oro)
+    }
+}
+
+@Composable
+private fun SummaryCompactRow(row: QnaSummary) {
+    Card(elevation = 1.dp, modifier = Modifier.fillMaxWidth()) {
+        Row(modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Column(modifier = Modifier.weight(0.20f)) {
+                Text(row.code, color = Guinda, fontWeight = FontWeight.Black, style = MaterialTheme.typography.subtitle1)
+                Text("${row.registros} reg.", style = MaterialTheme.typography.caption)
+            }
+            Column(modifier = Modifier.weight(0.62f)) {
+                Text(row.description, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text("Días acumulados", style = MaterialTheme.typography.caption)
+            }
+            StatusPill("${formatDias(row.dias)} d", Oro, modifier = Modifier.weight(0.18f))
         }
     }
 }
@@ -341,6 +433,13 @@ private fun ErrorCard(message: String) {
     Card(backgroundColor = MaterialTheme.colors.error.copy(alpha = 0.10f), modifier = Modifier.fillMaxWidth()) {
         Text(message, color = MaterialTheme.colors.error, modifier = Modifier.padding(12.dp))
     }
+}
+
+private fun formatDateShort(value: String?): String {
+    if (value.isNullOrBlank()) return "—"
+    val date = value.substringBefore(" ")
+    val parts = date.split("-")
+    return if (parts.size == 3) "${parts[2]}/${parts[1]}" else value
 }
 
 private fun formatDias(value: Double): String =
