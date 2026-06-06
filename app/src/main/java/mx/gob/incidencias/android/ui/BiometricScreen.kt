@@ -3,8 +3,10 @@ package mx.gob.incidencias.android.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.Button
@@ -24,6 +26,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import mx.gob.incidencias.android.data.api.ApiException
@@ -34,6 +38,10 @@ import mx.gob.incidencias.android.data.model.AttendanceResponse
 import mx.gob.incidencias.android.data.model.BiometricRecord
 import mx.gob.incidencias.android.data.model.Employee
 import mx.gob.incidencias.android.ui.components.DatePickerField
+import mx.gob.incidencias.android.ui.components.StatusPill
+import mx.gob.incidencias.android.ui.theme.Guinda
+import mx.gob.incidencias.android.ui.theme.Oro
+import mx.gob.incidencias.android.ui.theme.Verde
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -169,25 +177,45 @@ private fun RecentBiometricTab(
     loading: Boolean,
     onReload: () -> Unit
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Button(onClick = onReload, enabled = !loading) { Text("Recargar") }
-        if (records.isEmpty()) {
-            Text("No hay registros biométricos recientes.")
-            return@Column
+    LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        item {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                Button(onClick = onReload, enabled = !loading, modifier = Modifier.weight(1f)) { Text("Recargar") }
+                StatusPill("${records.size} checadas", Verde, modifier = Modifier.padding(top = 2.dp))
+            }
         }
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(records) { BiometricRecordCard(it) }
+        if (records.isEmpty()) {
+            item { Text("No hay registros biométricos recientes.") }
+        } else {
+            items(records) { BiometricCompactRow(it) }
         }
     }
 }
 
 @Composable
-private fun BiometricRecordCard(record: BiometricRecord) {
-    Card(elevation = 2.dp, modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(record.employee?.let { "${it.numEmpleado} - ${it.fullName}" } ?: record.numEmpleado, style = MaterialTheme.typography.subtitle1)
-            Text("${formatDate(record.fecha)} ${record.hora}")
-            Text(record.location.ifBlank { "Sin ubicación" }, style = MaterialTheme.typography.caption)
+private fun BiometricCompactRow(record: BiometricRecord) {
+    Card(elevation = 1.dp, modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Column(modifier = Modifier.weight(0.22f)) {
+                Text(extractTime(record.hora), style = MaterialTheme.typography.subtitle1, fontWeight = FontWeight.Black, color = Guinda)
+                Text(formatDate(record.fecha), style = MaterialTheme.typography.caption)
+            }
+            Column(modifier = Modifier.weight(0.78f)) {
+                Text(
+                    record.employee?.fullName ?: record.numEmpleado,
+                    style = MaterialTheme.typography.body2,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(record.employee?.numEmpleado ?: record.numEmpleado, style = MaterialTheme.typography.caption, color = Guinda)
+                    Text(record.location.ifBlank { "Sin ubicación" }, style = MaterialTheme.typography.caption, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+            }
         }
     }
 }
@@ -208,84 +236,149 @@ private fun EmployeeAttendanceTab(
     onEndChange: (String) -> Unit,
     onLoadAttendance: () -> Unit
 ) {
-    LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         item {
-            Card(elevation = 2.dp, modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Buscar empleado", style = MaterialTheme.typography.h6)
-                    OutlinedTextField(
-                        value = query,
-                        onValueChange = onQueryChange,
-                        label = { Text("Número o nombre") },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Button(onClick = onSearch, enabled = query.isNotBlank() && !loading, modifier = Modifier.fillMaxWidth()) {
-                        Text("Buscar")
-                    }
-                    selectedEmployee?.let {
-                        Text("Seleccionado: ${it.numEmpleado} - ${it.fullName}", color = MaterialTheme.colors.secondary)
-                    }
-                }
-            }
+            CompactEmployeeSearchCard(
+                query = query,
+                selectedEmployee = selectedEmployee,
+                loading = loading,
+                onQueryChange = onQueryChange,
+                onSearch = onSearch
+            )
         }
 
-        items(employees) { employee ->
-            Card(elevation = 2.dp, modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text("${employee.numEmpleado} - ${employee.fullName}", style = MaterialTheme.typography.subtitle1)
-                    Text(employee.department?.description ?: "Sin departamento")
-                    Button(onClick = { onEmployeeSelected(employee) }, modifier = Modifier.fillMaxWidth()) { Text("Seleccionar") }
-                }
+        if (selectedEmployee == null) {
+            items(employees) { employee ->
+                CompactEmployeeRow(employee = employee, onClick = { onEmployeeSelected(employee) })
             }
         }
 
         item {
-            Card(elevation = 2.dp, modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Rango de asistencia", style = MaterialTheme.typography.h6)
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                        DatePickerField(
-                            label = "Inicio",
-                            value = startDate,
-                            onValueChange = onStartChange,
-                            modifier = Modifier.weight(1f)
-                        )
-                        DatePickerField(
-                            label = "Fin",
-                            value = endDate,
-                            onValueChange = onEndChange,
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                    Button(onClick = onLoadAttendance, enabled = selectedEmployee != null && !loading, modifier = Modifier.fillMaxWidth()) {
-                        Text("Consultar asistencia")
-                    }
-                    Text("Formato: YYYY-MM-DD o YYYYMMDD", style = MaterialTheme.typography.caption)
-                }
-            }
+            CompactRangeCard(
+                startDate = startDate,
+                endDate = endDate,
+                selectedEmployee = selectedEmployee,
+                loading = loading,
+                onStartChange = onStartChange,
+                onEndChange = onEndChange,
+                onLoadAttendance = onLoadAttendance
+            )
         }
 
         val rows = attendance?.data.orEmpty().asReversed()
         if (rows.isEmpty()) {
             item { Text("Sin asistencia para mostrar.") }
         } else {
-            item { Text("Asistencia", style = MaterialTheme.typography.h6) }
-            items(rows) { AttendanceCard(it) }
+            item { AttendanceSummary(rows) }
+            items(rows) { CompactAttendanceRow(it) }
         }
     }
 }
 
 @Composable
-private fun AttendanceCard(day: AttendanceDay) {
+private fun CompactEmployeeSearchCard(
+    query: String,
+    selectedEmployee: Employee?,
+    loading: Boolean,
+    onQueryChange: (String) -> Unit,
+    onSearch: () -> Unit
+) {
     Card(elevation = 2.dp, modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(formatDate(day.date), style = MaterialTheme.typography.subtitle1)
-            Text("Entrada: ${extractTime(day.primeraChecada)}")
-            Text("Salida: ${extractTime(day.ultimaChecada)}")
-            Text("Checadas: ${day.numChecadas}")
-            if (day.retardo) Text("Retardo", color = MaterialTheme.colors.error)
-            if (day.incidencias.isNotEmpty()) Text("Incidencias: ${day.incidencias.joinToString(", ")}")
+        Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            if (selectedEmployee == null) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                    OutlinedTextField(
+                        value = query,
+                        onValueChange = onQueryChange,
+                        label = { Text("Empleado") },
+                        singleLine = true,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Button(onClick = onSearch, enabled = query.isNotBlank() && !loading) { Text("Buscar") }
+                }
+            } else {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(selectedEmployee.fullName, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(selectedEmployee.numEmpleado, style = MaterialTheme.typography.caption, color = Guinda)
+                    }
+                    TextButton(onClick = { onQueryChange("") }) { Text("Cambiar") }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CompactEmployeeRow(employee: Employee, onClick: () -> Unit) {
+    Card(elevation = 1.dp, modifier = Modifier.fillMaxWidth()) {
+        Row(modifier = Modifier.padding(10.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            StatusPill(employee.numEmpleado, Guinda)
+            Column(modifier = Modifier.weight(1f)) {
+                Text(employee.fullName, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(employee.department?.description ?: "Sin departamento", style = MaterialTheme.typography.caption, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+            Button(onClick = onClick) { Text("Elegir") }
+        }
+    }
+}
+
+@Composable
+private fun CompactRangeCard(
+    startDate: String,
+    endDate: String,
+    selectedEmployee: Employee?,
+    loading: Boolean,
+    onStartChange: (String) -> Unit,
+    onEndChange: (String) -> Unit,
+    onLoadAttendance: () -> Unit
+) {
+    Card(elevation = 2.dp, modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                DatePickerField("Inicio", startDate, onStartChange, Modifier.weight(1f))
+                DatePickerField("Fin", endDate, onEndChange, Modifier.weight(1f))
+            }
+            Button(onClick = onLoadAttendance, enabled = selectedEmployee != null && !loading, modifier = Modifier.fillMaxWidth()) {
+                Text("Consultar")
+            }
+        }
+    }
+}
+
+@Composable
+private fun AttendanceSummary(rows: List<AttendanceDay>) {
+    val retardos = rows.count { it.retardo }
+    val conIncidencias = rows.count { it.incidencias.isNotEmpty() }
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+        StatusPill("${rows.size} días", Verde)
+        StatusPill("$retardos retardos", if (retardos > 0) Guinda else Verde)
+        StatusPill("$conIncidencias incid.", Oro)
+    }
+}
+
+@Composable
+private fun CompactAttendanceRow(day: AttendanceDay) {
+    Card(elevation = 1.dp, modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Column(modifier = Modifier.weight(0.25f)) {
+                Text(formatDateShort(day.date), fontWeight = FontWeight.Black, color = Guinda)
+                Text("${day.numChecadas} chec.", style = MaterialTheme.typography.caption)
+            }
+            Column(modifier = Modifier.weight(0.55f)) {
+                Text("${extractTime(day.primeraChecada)} → ${extractTime(day.ultimaChecada)}", fontWeight = FontWeight.Bold)
+                if (day.incidencias.isNotEmpty()) {
+                    Text(day.incidencias.joinToString(", "), style = MaterialTheme.typography.caption, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                } else {
+                    Text("Sin incidencias", style = MaterialTheme.typography.caption)
+                }
+            }
+            Column(modifier = Modifier.weight(0.20f)) {
+                if (day.retardo) StatusPill("Ret.", Guinda) else StatusPill("OK", Verde)
+            }
         }
     }
 }
@@ -326,6 +419,13 @@ private fun formatDate(value: String?): String {
     val date = value.substringBefore(" ")
     val parts = date.split("-")
     return if (parts.size == 3 && parts[0].length == 4) "${parts[2]}-${parts[1]}-${parts[0]}" else value
+}
+
+private fun formatDateShort(value: String?): String {
+    if (value.isNullOrBlank()) return "—"
+    val date = value.substringBefore(" ")
+    val parts = date.split("-")
+    return if (parts.size == 3) "${parts[2]}/${parts[1]}" else value
 }
 
 private fun extractTime(value: String?): String {

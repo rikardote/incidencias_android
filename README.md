@@ -16,6 +16,7 @@ Cliente Android nativo para consumir la API Laravel `/api/v1` del sistema de inc
 - Eliminación de incidencias por token desde recientes para usuarios con captura.
 - Reporte resumen por quincena y departamento.
 - Biométrico con pestañas de recientes y asistencia por empleado.
+- Visualización compacta de checadas y asistencia para reducir scroll.
 - Tema visual institucional basado en backend: guinda, oro y verde.
 - DatePicker nativo en captura y filtros de fecha.
 - Primer rediseño UI/UX móvil con hero headers, action cards, tarjetas elevadas y estados visuales.
