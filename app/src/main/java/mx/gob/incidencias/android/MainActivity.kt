@@ -16,15 +16,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.Button
-import androidx.compose.material.Card
-import androidx.compose.material.CircularProgressIndicator
-import androidx.compose.material.Divider
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.OutlinedTextField
-import androidx.compose.material.Scaffold
-import androidx.compose.material.Text
-import androidx.compose.material.TextButton
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -124,7 +125,7 @@ private fun IncidenciasApp(session: SessionStore) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colors.background)
+                .background(MaterialTheme.colorScheme.background)
                 .padding(padding)
                 .padding(16.dp)
         ) {
@@ -248,7 +249,7 @@ private fun LoginScreen(
                     ) {
                         Text("Entrar")
                     }
-                    Text("Emulador: http://10.0.2.2:8190/", style = MaterialTheme.typography.caption)
+                    Text("Emulador: http://10.0.2.2:8190/", style = MaterialTheme.typography.labelSmall)
                 }
             }
         }
@@ -305,10 +306,10 @@ private fun MenuScreen(
 
 @Composable
 private fun MenuButton(title: String, subtitle: String, onClick: () -> Unit) {
-    Card(elevation = 3.dp, modifier = Modifier.fillMaxWidth()) {
+    Card(elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text(title, style = MaterialTheme.typography.h6)
-            Text(subtitle, style = MaterialTheme.typography.body2)
+            Text(title, style = MaterialTheme.typography.titleLarge)
+            Text(subtitle, style = MaterialTheme.typography.bodyMedium)
             Spacer(Modifier.height(8.dp))
             Button(onClick = onClick) { Text("Abrir") }
         }
@@ -338,7 +339,7 @@ private fun EmployeeSearchScreen(
             )
         }
         item {
-            Card(modifier = Modifier.fillMaxWidth(), elevation = 2.dp) {
+            Card(modifier = Modifier.fillMaxWidth(), elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)) {
                 Column(modifier = Modifier.padding(12.dp)) {
                     OutlinedTextField(
                         value = uiState.query,
@@ -355,8 +356,8 @@ private fun EmployeeSearchScreen(
             EmployeeSearchResultState.Idle -> item {
                 Text(
                     text = "Escribe para buscar",
-                    style = MaterialTheme.typography.caption,
-                    color = MaterialTheme.colors.onSurface.copy(alpha = 0.5f),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                     modifier = Modifier.padding(horizontal = 4.dp, vertical = 8.dp)
                 )
             }
@@ -366,13 +367,13 @@ private fun EmployeeSearchScreen(
                 item {
                     Text(
                         text = "${result.employees.size} coincidencia(s)",
-                        style = MaterialTheme.typography.subtitle2,
+                        style = MaterialTheme.typography.titleSmall,
                         modifier = Modifier.padding(horizontal = 4.dp, vertical = 8.dp)
                     )
                 }
                 if (result.employees.isEmpty()) {
                     item {
-                        Card(modifier = Modifier.fillMaxWidth(), backgroundColor = Oro.copy(alpha = 0.1f)) {
+                        Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Oro.copy(alpha = 0.1f))) {
                             Text(
                                 text = "No se encontraron empleados que coincidan con '${uiState.query}'",
                                 modifier = Modifier.padding(16.dp),
@@ -390,17 +391,17 @@ private fun EmployeeSearchScreen(
 
 @Composable
 private fun EmployeeCard(employee: Employee, onClick: () -> Unit) {
-    Card(elevation = 5.dp, shape = MaterialTheme.shapes.large, modifier = Modifier.fillMaxWidth()) {
+    Card(elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), shape = MaterialTheme.shapes.large, modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
                 StatusPill(employee.numEmpleado, Guinda)
                 employee.department?.code?.takeIf { it.isNotBlank() }?.let { StatusPill(it, Verde) }
             }
-            Text(employee.fullName, style = MaterialTheme.typography.h6)
-            Text(employee.department?.description ?: "Sin departamento", color = MaterialTheme.colors.onSurface.copy(alpha = 0.72f))
-            if (employee.puesto.isNotBlank()) Text(employee.puesto, style = MaterialTheme.typography.body2)
+            Text(employee.fullName, style = MaterialTheme.typography.titleLarge)
+            Text(employee.department?.description ?: "Sin departamento", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.72f))
+            if (employee.puesto.isNotBlank()) Text(employee.puesto, style = MaterialTheme.typography.bodyMedium)
             val horario = listOf(employee.horario, employee.jornada).filter { it.isNotBlank() }.joinToString(" · ")
-            if (horario.isNotBlank()) Text(horario, style = MaterialTheme.typography.caption)
+            if (horario.isNotBlank()) Text(horario, style = MaterialTheme.typography.labelSmall)
             Button(onClick = onClick, modifier = Modifier.fillMaxWidth()) { Text("Ver detalle") }
         }
     }
@@ -447,7 +448,7 @@ private fun RecentReportsScreen(
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         TextButton(onClick = onBack) { Text("← Menú") }
-        Text("Incidencias recientes", style = MaterialTheme.typography.h5)
+        Text("Incidencias recientes", style = MaterialTheme.typography.headlineSmall)
         Button(onClick = ::load, enabled = !loading) { Text("Recargar") }
         if (loading) LoadingScreen("Cargando...")
         error?.let { ErrorCard(it) }
@@ -475,17 +476,17 @@ private fun IncidenceCard(
     onCancelDelete: () -> Unit,
     onConfirmDelete: () -> Unit
 ) {
-    Card(elevation = 2.dp, modifier = Modifier.fillMaxWidth()) {
+    Card(elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(record.employee?.let { "${it.numEmpleado} - ${it.fullName}" } ?: "Sin empleado")
             Text("Código: ${record.codigo?.code.orEmpty()} ${record.codigo?.description.orEmpty()}")
             Text("${record.fechaInicio} a ${record.fechaFinal} · ${record.totalDias} días")
-            if (record.fechaCapturado.isNotBlank()) Text("Capturado: ${record.fechaCapturado}", style = MaterialTheme.typography.caption)
+            if (record.fechaCapturado.isNotBlank()) Text("Capturado: ${record.fechaCapturado}", style = MaterialTheme.typography.labelSmall)
 
             if (canDelete && record.token.isNotBlank()) {
                 Spacer(Modifier.height(4.dp))
                 if (confirmDelete) {
-                    Text("¿Eliminar esta incidencia?", color = MaterialTheme.colors.error)
+                    Text("¿Eliminar esta incidencia?", color = MaterialTheme.colorScheme.error)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Button(onClick = onConfirmDelete) { Text("Sí, eliminar") }
                         TextButton(onClick = onCancelDelete) { Text("Cancelar") }
@@ -520,7 +521,7 @@ private fun BiometricScreen(api: ApiService, onBack: () -> Unit) {
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         TextButton(onClick = onBack) { Text("← Menú") }
-        Text("Biométrico reciente", style = MaterialTheme.typography.h5)
+        Text("Biométrico reciente", style = MaterialTheme.typography.headlineSmall)
         Button(onClick = ::load, enabled = !loading) { Text("Recargar") }
         if (loading) LoadingScreen("Cargando...")
         error?.let { ErrorCard(it) }
@@ -532,11 +533,11 @@ private fun BiometricScreen(api: ApiService, onBack: () -> Unit) {
 
 @Composable
 private fun BiometricCard(record: BiometricRecord) {
-    Card(elevation = 2.dp, modifier = Modifier.fillMaxWidth()) {
+    Card(elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(12.dp)) {
             Text(record.employee?.let { "${it.numEmpleado} - ${it.fullName}" } ?: record.numEmpleado)
             Text("${record.fecha} ${record.hora}")
-            Text(record.location.ifBlank { "Sin ubicación" }, style = MaterialTheme.typography.caption)
+            Text(record.location.ifBlank { "Sin ubicación" }, style = MaterialTheme.typography.labelSmall)
         }
     }
 }
@@ -545,9 +546,9 @@ private fun BiometricCard(record: BiometricRecord) {
 private fun CapturePlaceholderScreen(onBack: () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         TextButton(onClick = onBack) { Text("← Menú") }
-        Text("Captura de incidencias", style = MaterialTheme.typography.h5)
+        Text("Captura de incidencias", style = MaterialTheme.typography.headlineSmall)
         Text("Siguiente fase: selector de empleado, selector de código y formulario dinámico usando POST /api/v1/incidencias.")
-        Divider()
+        HorizontalDivider()
         Text("La opción ya respeta el permiso can_capture del usuario.")
     }
 }
@@ -562,10 +563,10 @@ private fun LoadingScreen(message: String) {
 
 @Composable
 private fun ErrorCard(message: String) {
-    Card(backgroundColor = MaterialTheme.colors.error.copy(alpha = 0.10f), modifier = Modifier.fillMaxWidth()) {
+    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.10f)), modifier = Modifier.fillMaxWidth()) {
         Text(
             text = message,
-            color = MaterialTheme.colors.error,
+            color = MaterialTheme.colorScheme.error,
             modifier = Modifier.padding(12.dp)
         )
     }
