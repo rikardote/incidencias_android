@@ -138,22 +138,83 @@ fun CaptureScreen(api: ApiService, onBackToMenu: () -> Unit) {
             item { SuccessCard(successMessage.ifBlank { "Incidencia capturada correctamente" }) }
             if (successToken.isNotBlank()) item { StatusPill("Token: $successToken", Verde) }
             item {
-                Button(
-                    onClick = {
+                CaptureSuccessActions(
+                    employee = selectedEmployee,
+                    onCaptureSameEmployee = {
+                        selectedCode = null
+                        successMessage = ""
+                        successToken = ""
+                        step = if (selectedEmployee != null) CaptureStep.Code else CaptureStep.Employee
+                    },
+                    onSelectOtherEmployee = {
                         selectedEmployee = null
                         selectedCode = null
                         successMessage = ""
                         successToken = ""
                         step = CaptureStep.Employee
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                ) { Text("Capturar otra") }
+                    }
+                )
             }
-            item { TextButton(onClick = onBackToMenu, modifier = Modifier.fillMaxWidth()) { Text("Volver al menu") } }
+            item { TextButton(onClick = onBackToMenu, modifier = Modifier.fillMaxWidth()) { Text("Volver al menú") } }
         }
     }
 
     @Suppress("UNUSED_VARIABLE") val unused = scope
+}
+
+@Composable
+private fun CaptureSuccessActions(
+    employee: Employee?,
+    onCaptureSameEmployee: () -> Unit,
+    onSelectOtherEmployee: () -> Unit
+) {
+    Card(
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(10.dp)
+                        .clip(CircleShape)
+                        .background(Verde)
+                )
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("¿Qué sigue?", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black)
+                    Text(
+                        employee?.let { "Puedes capturar otra incidencia para ${it.fullName}" } ?: "Elige cómo continuar",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+            employee?.let {
+                SummaryInfoRow(
+                    accent = Guinda,
+                    badge = it.numEmpleado,
+                    title = it.fullName,
+                    subtitle = it.department?.description ?: "Sin departamento"
+                )
+            }
+            Button(
+                onClick = onCaptureSameEmployee,
+                modifier = Modifier.fillMaxWidth()
+            ) { Text("Capturar otra incidencia", fontWeight = FontWeight.Black) }
+            TextButton(
+                onClick = onSelectOtherEmployee,
+                modifier = Modifier.fillMaxWidth()
+            ) { Text("Seleccionar otro empleado") }
+        }
+    }
 }
 
 @Composable
