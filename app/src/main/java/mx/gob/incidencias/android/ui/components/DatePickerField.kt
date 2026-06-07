@@ -3,11 +3,14 @@ package mx.gob.incidencias.android.ui.components
 import android.app.DatePickerDialog
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material.OutlinedTextField
-import androidx.compose.material.Text
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
+import mx.gob.incidencias.android.R
+import mx.gob.incidencias.android.ui.theme.Guinda
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -23,8 +26,9 @@ fun DatePickerField(
 
     fun openPicker() {
         val calendar = parseCalendar(value) ?: Calendar.getInstance()
-        DatePickerDialog(
+        val dialog = DatePickerDialog(
             context,
+            R.style.Theme_Incidencias_DatePicker,
             { _, year, month, dayOfMonth ->
                 val selected = Calendar.getInstance().apply {
                     set(Calendar.YEAR, year)
@@ -36,7 +40,12 @@ fun DatePickerField(
             calendar.get(Calendar.YEAR),
             calendar.get(Calendar.MONTH),
             calendar.get(Calendar.DAY_OF_MONTH)
-        ).show()
+        )
+        dialog.setOnShowListener {
+            dialog.getButton(DatePickerDialog.BUTTON_POSITIVE)?.setTextColor(Guinda.toArgb())
+            dialog.getButton(DatePickerDialog.BUTTON_NEGATIVE)?.setTextColor(Guinda.toArgb())
+        }
+        dialog.show()
     }
 
     OutlinedTextField(

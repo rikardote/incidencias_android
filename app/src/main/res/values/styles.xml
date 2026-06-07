@@ -4,4 +4,13 @@
         <item name="android:statusBarColor">#F5F5F5</item>
         <item name="android:navigationBarColor">#FFFFFF</item>
     </style>
+
+    <!-- Force a high-contrast light native calendar even when the app/device is in dark mode. -->
+    <style name="Theme.Incidencias.DatePicker" parent="android:style/Theme.Material.Light.Dialog.Alert">
+        <item name="android:colorAccent">#9B2247</item>
+        <item name="android:textColorPrimary">#1F2937</item>
+        <item name="android:textColorSecondary">#4B5563</item>
+        <item name="android:windowBackground">#FFFFFF</item>
+        <item name="android:fontFamily">sans</item>
+    </style>
 </resources>
