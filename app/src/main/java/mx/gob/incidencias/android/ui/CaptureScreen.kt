@@ -19,6 +19,10 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -260,39 +264,28 @@ private fun CaptureCodeStep(
                 subtitle = if (uiState.selectedCategory == null) "Toca una categoría y elige el código." else "Los códigos aparecen debajo para elegirlos.",
                 pill = if (uiState.selectedCategory == null) "Sin teclado" else "Lista"
             ) {
-                val selectedOption = uiState.categories.firstOrNull { it.id == uiState.selectedCategory }
-                if (selectedOption == null) {
-                    CodeCategoryList(
-                        categories = uiState.categories,
-                        selectedCategory = uiState.selectedCategory,
-                        onCategorySelected = {
-                            showManualSearch = false
-                            codeSearchViewModel.onCategorySelected(it)
-                        }
-                    )
-                    TextButton(
-                        onClick = {
-                            showManualSearch = !showManualSearch
-                            if (!showManualSearch) codeSearchViewModel.clearSelection()
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    ) { Text(if (showManualSearch) "Ocultar búsqueda manual" else "Buscar manualmente por código/descripción") }
-                    if (showManualSearch) {
-                        OutlinedTextField(
-                            value = uiState.query,
-                            onValueChange = codeSearchViewModel::onQueryChange,
-                            label = { Text("Número o descripción") },
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true
-                        )
+                CodeCategoryCombo(
+                    categories = uiState.categories,
+                    selectedCategory = uiState.selectedCategory,
+                    onCategorySelected = {
+                        showManualSearch = false
+                        codeSearchViewModel.onCategorySelected(it)
                     }
-                } else {
-                    SelectedCodeCategoryRow(
-                        option = selectedOption,
-                        onChange = {
-                            showManualSearch = false
-                            codeSearchViewModel.clearSelection()
-                        }
+                )
+                TextButton(
+                    onClick = {
+                        showManualSearch = !showManualSearch
+                        if (!showManualSearch && uiState.selectedCategory == null) codeSearchViewModel.clearSelection()
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) { Text(if (showManualSearch) "Ocultar búsqueda manual" else "Buscar manualmente por código/descripción") }
+                if (showManualSearch) {
+                    OutlinedTextField(
+                        value = uiState.query,
+                        onValueChange = codeSearchViewModel::onQueryChange,
+                        label = { Text("Número o descripción") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
                     )
                 }
             }
@@ -341,77 +334,71 @@ private fun CaptureCodeStep(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun SelectedCodeCategoryRow(option: CodeCategoryOption, onChange: () -> Unit) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-        colors = CardDefaults.cardColors(containerColor = Guinda.copy(alpha = 0.10f)),
-        shape = RoundedCornerShape(18.dp)
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(38.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(Guinda.copy(alpha = 0.16f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(option.label.take(1), color = Guinda, fontWeight = FontWeight.Black)
-            }
-            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(option.label, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Black, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text("${option.count} código(s) disponibles", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            TextButton(onClick = onChange) { Text("Cambiar") }
-        }
-    }
-}
-
-@Composable
-private fun CodeCategoryList(
+private fun CodeCategoryCombo(
     categories: List<CodeCategoryOption>,
     selectedCategory: String?,
     onCategorySelected: (String) -> Unit
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        categories.forEach { option ->
-            val selected = selectedCategory == option.id
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onCategorySelected(option.id) },
-                elevation = CardDefaults.cardElevation(defaultElevation = if (selected) 2.dp else 0.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = if (selected) Guinda.copy(alpha = 0.13f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.42f)
-                ),
-                shape = RoundedCornerShape(18.dp)
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(36.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(if (selected) Guinda.copy(alpha = 0.18f) else Verde.copy(alpha = 0.12f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(option.label.take(1), color = if (selected) Guinda else Verde, fontWeight = FontWeight.Black)
+    var expanded by remember { mutableStateOf(false) }
+    val selectedOption = categories.firstOrNull { it.id == selectedCategory }
+    val selectedText = selectedOption?.let { "${it.label} · ${it.count} códigos" }.orEmpty()
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded },
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        OutlinedTextField(
+            value = selectedText,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("Tipo de incidencia") },
+            placeholder = { Text("Selecciona una categoría") },
+            supportingText = {
+                Text(selectedOption?.description ?: "Toca para desplegar opciones")
+            },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            modifier = Modifier
+                .menuAnchor()
+                .fillMaxWidth(),
+            singleLine = true
+        )
+
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            categories.forEach { option ->
+                DropdownMenuItem(
+                    text = {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(if (option.id == selectedCategory) Guinda.copy(alpha = 0.16f) else Verde.copy(alpha = 0.12f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(option.label.take(1), color = if (option.id == selectedCategory) Guinda else Verde, fontWeight = FontWeight.Black)
+                            }
+                            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                Text(option.label, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Black, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                Text(option.description, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            }
+                            StatusPill("${option.count}", if (option.id == selectedCategory) Guinda else Verde)
+                        }
+                    },
+                    onClick = {
+                        onCategorySelected(option.id)
+                        expanded = false
                     }
-                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        Text(option.label, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Black, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        Text(option.description, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    }
-                    StatusPill("${option.count}", if (selected) Guinda else Verde)
-                    Text("Ver", style = MaterialTheme.typography.labelSmall, color = if (selected) Guinda else MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Bold)
-                }
+                )
             }
         }
     }
