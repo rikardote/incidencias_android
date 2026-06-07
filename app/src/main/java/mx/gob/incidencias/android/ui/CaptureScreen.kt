@@ -256,32 +256,43 @@ private fun CaptureCodeStep(
 
         item {
             CaptureSearchPanel(
-                title = "Selecciona el tipo",
-                subtitle = "Toca una categoría y elige el código. Usa búsqueda manual solo si lo necesitas.",
-                pill = "Sin teclado"
+                title = if (uiState.selectedCategory == null) "Selecciona el tipo" else "Tipo seleccionado",
+                subtitle = if (uiState.selectedCategory == null) "Toca una categoría y elige el código." else "Los códigos aparecen debajo para elegirlos.",
+                pill = if (uiState.selectedCategory == null) "Sin teclado" else "Lista"
             ) {
-                CodeCategoryList(
-                    categories = uiState.categories,
-                    selectedCategory = uiState.selectedCategory,
-                    onCategorySelected = {
-                        showManualSearch = false
-                        codeSearchViewModel.onCategorySelected(it)
+                val selectedOption = uiState.categories.firstOrNull { it.id == uiState.selectedCategory }
+                if (selectedOption == null) {
+                    CodeCategoryList(
+                        categories = uiState.categories,
+                        selectedCategory = uiState.selectedCategory,
+                        onCategorySelected = {
+                            showManualSearch = false
+                            codeSearchViewModel.onCategorySelected(it)
+                        }
+                    )
+                    TextButton(
+                        onClick = {
+                            showManualSearch = !showManualSearch
+                            if (!showManualSearch) codeSearchViewModel.clearSelection()
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) { Text(if (showManualSearch) "Ocultar búsqueda manual" else "Buscar manualmente por código/descripción") }
+                    if (showManualSearch) {
+                        OutlinedTextField(
+                            value = uiState.query,
+                            onValueChange = codeSearchViewModel::onQueryChange,
+                            label = { Text("Número o descripción") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true
+                        )
                     }
-                )
-                TextButton(
-                    onClick = {
-                        showManualSearch = !showManualSearch
-                        if (!showManualSearch) codeSearchViewModel.clearSelection()
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                ) { Text(if (showManualSearch) "Ocultar búsqueda manual" else "Buscar manualmente por código/descripción") }
-                if (showManualSearch) {
-                    OutlinedTextField(
-                        value = uiState.query,
-                        onValueChange = codeSearchViewModel::onQueryChange,
-                        label = { Text("Número o descripción") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
+                } else {
+                    SelectedCodeCategoryRow(
+                        option = selectedOption,
+                        onChange = {
+                            showManualSearch = false
+                            codeSearchViewModel.clearSelection()
+                        }
                     )
                 }
             }
@@ -326,6 +337,37 @@ private fun CaptureCodeStep(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun SelectedCodeCategoryRow(option: CodeCategoryOption, onChange: () -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        colors = CardDefaults.cardColors(containerColor = Guinda.copy(alpha = 0.10f)),
+        shape = RoundedCornerShape(18.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(38.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Guinda.copy(alpha = 0.16f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(option.label.take(1), color = Guinda, fontWeight = FontWeight.Black)
+            }
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(option.label, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Black, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text("${option.count} código(s) disponibles", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            TextButton(onClick = onChange) { Text("Cambiar") }
         }
     }
 }
