@@ -26,6 +26,7 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -361,7 +362,7 @@ private fun CodeCategoryCombo(
             },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
             modifier = Modifier
-                .menuAnchor()
+                .menuAnchor(MenuAnchorType.PrimaryNotEditable, enabled = true)
                 .fillMaxWidth(),
             singleLine = true
         )
@@ -528,14 +529,14 @@ private fun CaptureFormStep(
         item {
             HeroHeader(
                 title = "Datos de captura",
-                subtitle = "Completa solo los campos requeridos para este codigo",
-                icon = "D"
+                subtitle = "Completa únicamente lo necesario para ${code.code}",
+                icon = "📋"
             )
         }
         item { CaptureStepper(current = 3) }
         item { CaptureContextCard(employee, code) }
         item {
-            CaptureSectionCard(title = "Fechas", subtitle = "Selecciona fechas desde el calendario") {
+            CaptureSectionCard(title = "Periodo de aplicación", subtitle = "Define cuándo aplica la incidencia") {
                 DatePickerField(label = "Fecha inicio", value = fechaInicio, onValueChange = { fechaInicio = it })
                 if (requiresRange) {
                     Spacer(Modifier.height(8.dp))
@@ -545,7 +546,7 @@ private fun CaptureFormStep(
         }
         if (requiresIncapacity) {
             item {
-                CaptureSectionCard(title = "Informacion medica", subtitle = "Datos requeridos para incapacidades") {
+                CaptureSectionCard(title = "Información médica", subtitle = "Selecciona médico y completa datos de incapacidad") {
                     // Médico seleccionado
                     if (selectedDoctor != null) {
                         Card(
@@ -674,31 +675,22 @@ private fun CaptureFormStep(
         }
         if (requiresPeriod) {
             item {
-                CaptureSectionCard(title = "Periodo vacacional", subtitle = "Selecciona el periodo aplicable") {
-                    formUiState.selectedPeriod?.let { selected ->
-                        StatusPill("Seleccionado: ${selected.label.ifBlank { "${selected.periodo}/${selected.year}" }}", Verde)
-                        Spacer(Modifier.height(8.dp))
-                    }
-
-                    Button(
-                        onClick = { captureFormViewModel.loadPeriods(force = true) },
-                        enabled = !loadingPeriods,
-                        modifier = Modifier.fillMaxWidth()
-                    ) { Text(if (loadingPeriods) "Cargando..." else "Actualizar periodos") }
-
-                    Spacer(Modifier.height(8.dp))
+                CaptureSectionCard(title = "Periodo vacacional", subtitle = "Elige el periodo desde un combo, sin listas largas") {
                     when (val periodsState = formUiState.periodsState) {
                         PeriodsState.Idle -> Text("Los periodos se cargarán automáticamente.", style = MaterialTheme.typography.labelSmall)
                         PeriodsState.Loading -> LoadingRow("Cargando periodos...")
                         is PeriodsState.Error -> ErrorCard(periodsState.message)
                         is PeriodsState.Success -> {
-                            periodsState.periods.take(12).forEach { period ->
-                                PeriodSelectRow(
-                                    period = period,
-                                    selected = formUiState.selectedPeriod?.id == period.id,
-                                    onClick = { captureFormViewModel.selectPeriod(period) }
-                                )
-                            }
+                            PeriodCombo(
+                                periods = periodsState.periods.take(24),
+                                selectedPeriod = formUiState.selectedPeriod,
+                                onPeriodSelected = captureFormViewModel::selectPeriod
+                            )
+                            TextButton(
+                                onClick = { captureFormViewModel.loadPeriods(force = true) },
+                                enabled = !loadingPeriods,
+                                modifier = Modifier.fillMaxWidth()
+                            ) { Text(if (loadingPeriods) "Actualizando..." else "Actualizar periodos") }
                         }
                     }
                 }
@@ -706,7 +698,7 @@ private fun CaptureFormStep(
         }
         if (requiresTxt || requiresCommission || requiresGrantedBy) {
             item {
-                CaptureSectionCard(title = "Informacion adicional", subtitle = "Campos complementarios del codigo") {
+                CaptureSectionCard(title = "Información adicional", subtitle = "Campos complementarios del código seleccionado") {
                     if (requiresTxt) {
                         OutlinedTextField(
                             value = autorizaTxt,
@@ -753,26 +745,59 @@ private fun CaptureFormStep(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun PeriodSelectRow(period: Periodo, selected: Boolean, onClick: () -> Unit) {
-    Card(
-        elevation = CardDefaults.cardElevation(defaultElevation = if (selected) 3.dp else 1.dp),
-        colors = CardDefaults.cardColors(containerColor = if (selected) Verde.copy(alpha = 0.12f) else MaterialTheme.colorScheme.surface),
-        shape = RoundedCornerShape(14.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp)
-            .clickable(onClick = onClick)
+private fun PeriodCombo(
+    periods: List<Periodo>,
+    selectedPeriod: Periodo?,
+    onPeriodSelected: (Periodo) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val selectedText = selectedPeriod?.label?.ifBlank { "Periodo ${selectedPeriod.periodo}/${selectedPeriod.year}" }.orEmpty()
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded },
+        modifier = Modifier.fillMaxWidth()
     ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-            verticalAlignment = Alignment.CenterVertically
+        OutlinedTextField(
+            value = selectedText,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("Periodo vacacional") },
+            placeholder = { Text("Selecciona periodo") },
+            supportingText = { Text("${periods.size} periodo(s) disponibles") },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            modifier = Modifier
+                .menuAnchor(MenuAnchorType.PrimaryNotEditable, enabled = true)
+                .fillMaxWidth(),
+            singleLine = true
+        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
         ) {
-            StatusPill(if (selected) "OK" else "Elegir", if (selected) Verde else Oro)
-            Column(modifier = Modifier.weight(1f)) {
-                Text(period.label.ifBlank { "Periodo ${period.periodo}/${period.year}" }, fontWeight = FontWeight.Bold)
-                Text("Periodo vacacional", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f))
+            periods.forEach { period ->
+                val label = period.label.ifBlank { "Periodo ${period.periodo}/${period.year}" }
+                DropdownMenuItem(
+                    text = {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            StatusPill(period.year.toString(), Oro)
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(label, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                Text("Periodo vacacional", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
+                    },
+                    onClick = {
+                        onPeriodSelected(period)
+                        expanded = false
+                    }
+                )
             }
         }
     }
@@ -960,13 +985,32 @@ private fun CaptureSectionCard(
     subtitle: String? = null,
     content: @Composable ColumnScopeLike.() -> Unit
 ) {
-    Card(elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), shape = RoundedCornerShape(22.dp), modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
-            subtitle?.takeIf { it.isNotBlank() }?.let {
-                Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f))
+    Card(
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(10.dp)
+                        .clip(CircleShape)
+                        .background(Guinda)
+                )
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black)
+                    subtitle?.takeIf { it.isNotBlank() }?.let {
+                        Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
             }
-            HorizontalDivider()
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.65f))
             ColumnScopeLike.content()
         }
     }
