@@ -1,5 +1,6 @@
 package mx.gob.incidencias.android.ui.components
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
@@ -27,10 +29,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import mx.gob.incidencias.android.R
 import mx.gob.incidencias.android.ui.theme.Guinda
 import mx.gob.incidencias.android.ui.theme.GuindaDark
 import mx.gob.incidencias.android.ui.theme.Oro
@@ -75,38 +80,57 @@ fun HeroHeader(
                     .clip(CircleShape)
                     .background(Color.White.copy(alpha = 0.06f))
             )
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(Spacing.lg),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Surface(
-                    shape = CircleShape,
-                    color = Color.White.copy(alpha = 0.13f),
-                    modifier = Modifier
-                        .size(58.dp)
-                        .border(1.dp, Color.White.copy(alpha = 0.18f), CircleShape)
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Text(icon, fontSize = 27.sp)
+            Column(verticalArrangement = Arrangement.spacedBy(Spacing.md), modifier = Modifier.fillMaxWidth()) {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = Color.White.copy(alpha = 0.94f),
+                        tonalElevation = 0.dp,
+                        modifier = Modifier
+                            .width(132.dp)
+                            .height(42.dp)
+                    ) {
+                        Image(
+                            painter = painterResource(R.drawable.logo_institucional),
+                            contentDescription = "Logo institucional",
+                            contentScale = ContentScale.Fit,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                        )
                     }
                 }
-                Column(verticalArrangement = Arrangement.spacedBy(Spacing.xs), modifier = Modifier.weight(1f)) {
-                    Text(
-                        title,
-                        color = Color.White,
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Black,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Text(
-                        subtitle,
-                        color = Color.White.copy(alpha = 0.84f),
-                        style = MaterialTheme.typography.bodyMedium,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
-                    )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.lg),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Surface(
+                        shape = CircleShape,
+                        color = Color.White.copy(alpha = 0.13f),
+                        modifier = Modifier
+                            .size(58.dp)
+                            .border(1.dp, Color.White.copy(alpha = 0.18f), CircleShape)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text(icon, fontSize = 27.sp)
+                        }
+                    }
+                    Column(verticalArrangement = Arrangement.spacedBy(Spacing.xs), modifier = Modifier.weight(1f)) {
+                        Text(
+                            title,
+                            color = Color.White,
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Black,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Text(
+                            subtitle,
+                            color = Color.White.copy(alpha = 0.84f),
+                            style = MaterialTheme.typography.bodyMedium,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                 }
             }
         }
