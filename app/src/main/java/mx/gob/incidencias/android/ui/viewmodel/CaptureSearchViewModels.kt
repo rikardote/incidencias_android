@@ -21,8 +21,17 @@ sealed interface CodeSearchResultState {
     data class Error(val message: String) : CodeSearchResultState
 }
 
+data class CodeCategoryOption(
+    val id: String,
+    val label: String,
+    val description: String,
+    val count: Int = 0
+)
+
 data class CodeSearchUiState(
     val query: String = "",
+    val selectedCategory: String? = null,
+    val categories: List<CodeCategoryOption> = emptyList(),
     val result: CodeSearchResultState = CodeSearchResultState.LoadingCatalog
 )
 
@@ -44,7 +53,12 @@ class CodeSearchViewModel(
             repository.loadIncidenceCodes()
                 .onSuccess { codes ->
                     allCodes = codes
-                    applyFilter(_uiState.value.query)
+                    _uiState.update {
+                        it.copy(
+                            categories = buildCategories(codes),
+                            result = CodeSearchResultState.Idle
+                        )
+                    }
                 }
                 .onFailure { error ->
                     _uiState.update {
@@ -54,12 +68,31 @@ class CodeSearchViewModel(
         }
     }
 
-    fun onQueryChange(query: String) {
-        _uiState.update { it.copy(query = query) }
-        applyFilter(query)
+    fun onCategorySelected(categoryId: String) {
+        val selected = if (_uiState.value.selectedCategory == categoryId) null else categoryId
+        _uiState.update { it.copy(selectedCategory = selected, query = "") }
+        applyCategory(selected)
     }
 
-    private fun applyFilter(query: String) {
+    fun onQueryChange(query: String) {
+        _uiState.update { it.copy(query = query, selectedCategory = null) }
+        applyTextFilter(query)
+    }
+
+    fun clearSelection() {
+        _uiState.update { it.copy(query = "", selectedCategory = null, result = CodeSearchResultState.Idle) }
+    }
+
+    private fun applyCategory(categoryId: String?) {
+        if (categoryId == null) {
+            _uiState.update { it.copy(result = CodeSearchResultState.Idle) }
+            return
+        }
+        val filtered = allCodes.filter { it.matchesCategory(categoryId) }
+        _uiState.update { it.copy(result = CodeSearchResultState.Success(filtered)) }
+    }
+
+    private fun applyTextFilter(query: String) {
         if (query.isBlank()) {
             _uiState.update { it.copy(result = CodeSearchResultState.Idle) }
             return
@@ -71,6 +104,18 @@ class CodeSearchViewModel(
         _uiState.update { it.copy(result = CodeSearchResultState.Success(filtered)) }
     }
 
+    private fun buildCategories(codes: List<IncidenceCode>): List<CodeCategoryOption> {
+        val base = listOf(
+            CodeCategoryOption("vacaciones", "Vacaciones", "Periodos y días vacacionales"),
+            CodeCategoryOption("incapacidad", "Incapacidad", "Códigos con información médica"),
+            CodeCategoryOption("rango", "Rango / permisos", "Incidencias con fecha inicio y final"),
+            CodeCategoryOption("comision", "Comisión / TXT", "Comisión oficial, TXT u otorgados"),
+            CodeCategoryOption("todos", "Todos", "Catálogo completo")
+        )
+        return base.map { option -> option.copy(count = codes.count { it.matchesCategory(option.id) }) }
+            .filter { it.count > 0 || it.id == "todos" }
+    }
+
     companion object {
         fun factory(repository: IncidenciasRepository): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
@@ -79,6 +124,17 @@ class CodeSearchViewModel(
             }
         }
     }
+}
+
+private fun IncidenceCode.normalizedCodeForCategory(): String = code.trim().trimStart('0').ifBlank { "0" }
+
+private fun IncidenceCode.matchesCategory(categoryId: String): Boolean = when (categoryId) {
+    "vacaciones" -> requiresPeriodo || isVacacional || normalizedCodeForCategory() in setOf("60", "62", "63")
+    "incapacidad" -> requiresMedico || isIncapacidad || normalizedCodeForCategory() in setOf("53", "54", "55")
+    "rango" -> requiresRange || normalizedCodeForCategory() in setOf("40", "41", "47", "48", "49", "53", "54", "55", "60", "61", "62", "63")
+    "comision" -> requiresComision || requiresTxt || requiresOtorgado || normalizedCodeForCategory() in setOf("61", "900", "901")
+    "todos" -> true
+    else -> false
 }
 
 sealed interface DoctorSearchResultState {

@@ -61,6 +61,7 @@ import mx.gob.incidencias.android.ui.theme.Oro
 import mx.gob.incidencias.android.ui.theme.Verde
 import mx.gob.incidencias.android.ui.viewmodel.CaptureFormViewModel
 import mx.gob.incidencias.android.ui.viewmodel.CaptureSubmitState
+import mx.gob.incidencias.android.ui.viewmodel.CodeCategoryOption
 import mx.gob.incidencias.android.ui.viewmodel.CodeSearchResultState
 import mx.gob.incidencias.android.ui.viewmodel.CodeSearchViewModel
 import mx.gob.incidencias.android.ui.viewmodel.DoctorSearchResultState
@@ -239,13 +240,14 @@ private fun CaptureCodeStep(
         factory = CodeSearchViewModel.factory(repository)
     )
     val uiState by codeSearchViewModel.uiState.collectAsStateWithLifecycle()
+    var showManualSearch by remember { mutableStateOf(false) }
 
     LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         item { TextButton(onClick = onBack) { Text("<- Menu") } }
         item {
             HeroHeader(
-                title = "Codigo de incidencia",
-                subtitle = employee?.fullName ?: "Escribe el numero del codigo",
+                title = "Código de incidencia",
+                subtitle = employee?.fullName ?: "Selecciona desde el catálogo",
                 icon = "#"
             )
         }
@@ -254,24 +256,41 @@ private fun CaptureCodeStep(
 
         item {
             CaptureSearchPanel(
-                title = "Código de incidencia",
-                subtitle = "Captura el número o una palabra clave para filtrar el catálogo",
-                pill = "Catálogo"
+                title = "Selecciona el tipo",
+                subtitle = "Toca una categoría y elige el código. Usa búsqueda manual solo si lo necesitas.",
+                pill = "Sin teclado"
             ) {
-                OutlinedTextField(
-                    value = uiState.query,
-                    onValueChange = codeSearchViewModel::onQueryChange,
-                    label = { Text("Número o descripción") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                CodeCategoryGrid(
+                    categories = uiState.categories,
+                    selectedCategory = uiState.selectedCategory,
+                    onCategorySelected = {
+                        showManualSearch = false
+                        codeSearchViewModel.onCategorySelected(it)
+                    }
                 )
+                TextButton(
+                    onClick = {
+                        showManualSearch = !showManualSearch
+                        if (!showManualSearch) codeSearchViewModel.clearSelection()
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) { Text(if (showManualSearch) "Ocultar búsqueda manual" else "Buscar manualmente por código/descripción") }
+                if (showManualSearch) {
+                    OutlinedTextField(
+                        value = uiState.query,
+                        onValueChange = codeSearchViewModel::onQueryChange,
+                        label = { Text("Número o descripción") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+                }
             }
         }
 
         when (val result = uiState.result) {
             CodeSearchResultState.Idle -> item {
                 Text(
-                    text = "Escribe para buscar",
+                    text = "Elige una categoría para ver opciones disponibles.",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                     modifier = Modifier.padding(horizontal = 4.dp, vertical = 8.dp)
@@ -282,7 +301,7 @@ private fun CaptureCodeStep(
             is CodeSearchResultState.Success -> {
                 item {
                     Text(
-                        text = "${result.codes.size} coincidencia(s)",
+                        text = if (uiState.selectedCategory != null) "${result.codes.size} código(s) disponibles" else "${result.codes.size} coincidencia(s)",
                         style = MaterialTheme.typography.titleSmall,
                         modifier = Modifier.padding(horizontal = 4.dp, vertical = 8.dp)
                     )
@@ -295,7 +314,7 @@ private fun CaptureCodeStep(
                             colors = CardDefaults.cardColors(containerColor = Oro.copy(alpha = 0.1f))
                         ) {
                             Text(
-                                text = "No se encontraron codigos que coincidan con '${uiState.query}'",
+                                text = if (uiState.selectedCategory != null) "No hay códigos en esta categoría" else "No se encontraron códigos que coincidan con '${uiState.query}'",
                                 modifier = Modifier.padding(16.dp),
                                 color = Oro
                             )
@@ -306,6 +325,52 @@ private fun CaptureCodeStep(
                         CodeSelectCard(code = code, onClick = { onSelected(code) })
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CodeCategoryGrid(
+    categories: List<CodeCategoryOption>,
+    selectedCategory: String?,
+    onCategorySelected: (String) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        categories.chunked(2).forEach { row ->
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                row.forEach { option ->
+                    val selected = selectedCategory == option.id
+                    Card(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable { onCategorySelected(option.id) },
+                        elevation = CardDefaults.cardElevation(defaultElevation = if (selected) 3.dp else 1.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (selected) Guinda.copy(alpha = 0.13f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)
+                        ),
+                        shape = RoundedCornerShape(18.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(option.label, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Black, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                StatusPill(option.count.toString(), if (selected) Guinda else Verde)
+                            }
+                            Text(
+                                option.description,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+                }
+                if (row.size == 1) Spacer(modifier = Modifier.weight(1f))
             }
         }
     }
