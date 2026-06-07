@@ -12,8 +12,8 @@ android {
         applicationId = "mx.gob.incidencias.android"
         minSdk = 24
         targetSdk = 35
-        versionCode = 11
-        versionName = "0.2.9-alpha"
+        versionCode = 12
+        versionName = "0.2.10-alpha"
 
         buildConfigField("String", "DEFAULT_API_URL", "\"http://10.0.2.2:8190/\"")
     }
