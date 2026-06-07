@@ -29,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -254,11 +255,15 @@ fun StatusPill(
     color: Color,
     modifier: Modifier = Modifier
 ) {
+    val darkTheme = MaterialTheme.colorScheme.background.luminance() < 0.5f
+    val pillContent = if (darkTheme && color.luminance() < 0.55f) Color.White else color
+    val pillContainer = color.copy(alpha = if (darkTheme) 0.26f else 0.12f)
+
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(99.dp),
-        color = color.copy(alpha = 0.12f),
-        contentColor = color
+        color = pillContainer,
+        contentColor = pillContent
     ) {
         Text(
             text,

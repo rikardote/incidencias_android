@@ -24,7 +24,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
@@ -57,8 +56,6 @@ import mx.gob.incidencias.android.data.model.Periodo
 import mx.gob.incidencias.android.data.model.StoreIncidenciaRequest
 import mx.gob.incidencias.android.data.repository.IncidenciasRepository
 import mx.gob.incidencias.android.ui.components.DatePickerField
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import mx.gob.incidencias.android.ui.components.HeroHeader
 import mx.gob.incidencias.android.ui.components.StatusPill
 import mx.gob.incidencias.android.ui.theme.Guinda
@@ -698,11 +695,7 @@ private fun CaptureFormStep(
                                                         fontWeight = FontWeight.SemiBold
                                                     )
                                                 }
-                                                Icon(
-                                                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                                                    contentDescription = "Seleccionar",
-                                                    tint = Verde
-                                                )
+                                                Text("›", color = Verde, fontWeight = FontWeight.Black, style = MaterialTheme.typography.headlineSmall)
                                             }
                                         }
                                     }

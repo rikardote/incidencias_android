@@ -1,16 +1,9 @@
 package mx.gob.incidencias.android.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material.Colors
-import androidx.compose.material.Shapes as Material2Shapes
-import androidx.compose.material.Typography as Material2Typography
-import androidx.compose.material.darkColors
-import androidx.compose.material.lightColors
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
-import androidx.compose.material.MaterialTheme as Material2Theme
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme as Material3Theme
 import androidx.compose.material3.Shapes as Material3Shapes
@@ -99,37 +92,6 @@ private val DarkColorScheme: ColorScheme = darkColorScheme(
     outlineVariant = Color(0xFF4B5563)
 )
 
-// Compatibility layer while screens are migrated progressively from Material2 to Material3.
-private val LightMaterial2Colors: Colors = lightColors(
-    primary = Guinda,
-    primaryVariant = GuindaDark,
-    secondary = Oro,
-    secondaryVariant = OroDark,
-    background = Color(0xFFF4F6F9),
-    surface = Color.White,
-    error = Color(0xFFB91C1C),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onBackground = Color(0xFF1F2937),
-    onSurface = Color(0xFF1F2937),
-    onError = Color.White
-)
-
-private val DarkMaterial2Colors: Colors = darkColors(
-    primary = GuindaLight,
-    primaryVariant = Guinda,
-    secondary = OroLight,
-    secondaryVariant = Oro,
-    background = Color(0xFF111827),
-    surface = Color(0xFF1F2937),
-    error = Color(0xFFFCA5A5),
-    onPrimary = Color(0xFF1F2937),
-    onSecondary = Color(0xFF1F2937),
-    onBackground = Color(0xFFF3F4F6),
-    onSurface = Color(0xFFF3F4F6),
-    onError = Color(0xFF1F2937)
-)
-
 private val AppMaterial3Shapes = Material3Shapes(
     extraSmall = androidx.compose.foundation.shape.RoundedCornerShape(Spacing.xs),
     small = androidx.compose.foundation.shape.RoundedCornerShape(Spacing.sm),
@@ -138,14 +100,7 @@ private val AppMaterial3Shapes = Material3Shapes(
     extraLarge = androidx.compose.foundation.shape.RoundedCornerShape(28.dp)
 )
 
-private val AppMaterial2Shapes = Material2Shapes(
-    small = androidx.compose.foundation.shape.RoundedCornerShape(Spacing.xs),
-    medium = androidx.compose.foundation.shape.RoundedCornerShape(Spacing.md),
-    large = androidx.compose.foundation.shape.RoundedCornerShape(Spacing.lg)
-)
-
 private val AppMaterial3Typography = Material3Typography()
-private val AppMaterial2Typography = Material2Typography(defaultFontFamily = FontFamily.SansSerif)
 
 @Composable
 fun IncidenciasTheme(content: @Composable () -> Unit) {
@@ -153,13 +108,7 @@ fun IncidenciasTheme(content: @Composable () -> Unit) {
     Material3Theme(
         colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme,
         typography = AppMaterial3Typography,
-        shapes = AppMaterial3Shapes
-    ) {
-        Material2Theme(
-            colors = if (darkTheme) DarkMaterial2Colors else LightMaterial2Colors,
-            typography = AppMaterial2Typography,
-            shapes = AppMaterial2Shapes,
-            content = content
-        )
-    }
+        shapes = AppMaterial3Shapes,
+        content = content
+    )
 }

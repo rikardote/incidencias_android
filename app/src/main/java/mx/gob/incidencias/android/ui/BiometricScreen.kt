@@ -16,6 +16,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
@@ -27,6 +28,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -209,33 +211,56 @@ private fun BiometricCompactRow(record: BiometricRecord) {
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(modifier = Modifier.weight(0.24f)) {
-                Text(extractTime(record.hora), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black, color = Guinda)
-                Text(formatDateShort(record.fecha), style = MaterialTheme.typography.labelSmall)
+            Column(modifier = Modifier.width(58.dp)) {
+                Text(extractTime(record.hora), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.primary)
+                Text(formatDateShort(record.fecha), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            Column(modifier = Modifier.weight(0.56f)) {
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                 val nameParts = splitEmployeeName(record.employee?.fullName.orEmpty())
-                Text(
-                    nameParts.surnames.ifBlank { "Empleado ${record.numEmpleado}" },
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        nameParts.surnames.ifBlank { "Empleado ${record.numEmpleado}" },
+                        modifier = Modifier.weight(1f),
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    EmployeeNumberBadge(record.employee?.numEmpleado ?: record.numEmpleado)
+                }
                 Text(
                     nameParts.names,
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.72f),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
             }
-            Column(modifier = Modifier.weight(0.20f)) {
-                StatusPill(record.employee?.numEmpleado ?: record.numEmpleado, Verde)
-            }
         }
+    }
+}
+
+@Composable
+private fun EmployeeNumberBadge(number: String) {
+    Surface(
+        shape = RoundedCornerShape(99.dp),
+        color = MaterialTheme.colorScheme.tertiaryContainer,
+        contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+    ) {
+        Text(
+            text = number,
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Black,
+            maxLines = 1
+        )
     }
 }
 
@@ -321,10 +346,14 @@ private fun CompactEmployeeSearchCard(
                     Button(onClick = onSearch, enabled = query.isNotBlank() && !loading) { Text("Buscar") }
                 }
             } else {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.weight(1f)) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(selectedEmployee.fullName, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        Text(selectedEmployee.numEmpleado, style = MaterialTheme.typography.labelSmall, color = Guinda)
+                        EmployeeNumberBadge(selectedEmployee.numEmpleado)
                     }
                     TextButton(onClick = { onQueryChange("") }) { Text("Cambiar") }
                 }
@@ -341,8 +370,12 @@ private fun CompactEmployeeRow(employee: Employee, onClick: () -> Unit) {
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         modifier = Modifier.fillMaxWidth()
     ) {
-        Row(modifier = Modifier.padding(10.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            StatusPill(employee.numEmpleado, Guinda)
+        Row(
+            modifier = Modifier.padding(10.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            EmployeeNumberBadge(employee.numEmpleado)
             Column(modifier = Modifier.weight(1f)) {
                 Text(employee.fullName, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(employee.department?.description ?: "Sin departamento", style = MaterialTheme.typography.labelSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
