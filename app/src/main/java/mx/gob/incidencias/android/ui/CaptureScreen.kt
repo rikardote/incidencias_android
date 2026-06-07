@@ -945,22 +945,66 @@ private fun CaptureContextCard(employee: Employee, code: IncidenceCode) {
     Card(
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f)),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("Resumen de captura", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black)
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
-                StatusPill(employee.numEmpleado, Guinda)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(10.dp)
+                        .clip(CircleShape)
+                        .background(Verde)
+                )
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(employee.fullName, fontWeight = FontWeight.Black, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text(employee.department?.description ?: "Sin departamento", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text("Resumen de captura", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black)
+                    Text("Empleado y código seleccionados", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
+                StatusPill("Paso 3", Guinda)
             }
-            HorizontalDivider()
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
-                StatusPill("Código ${code.code}", Oro)
-                Text(code.description, modifier = Modifier.weight(1f), fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.65f))
+            SummaryInfoRow(
+                accent = Guinda,
+                badge = employee.numEmpleado,
+                title = employee.fullName,
+                subtitle = employee.department?.description ?: "Sin departamento"
+            )
+            SummaryInfoRow(
+                accent = Oro,
+                badge = "Código ${code.code}",
+                title = code.description,
+                subtitle = requirementsSummary(code)
+            )
+        }
+    }
+}
+
+@Composable
+private fun SummaryInfoRow(
+    accent: Color,
+    badge: String,
+    title: String,
+    subtitle: String
+) {
+    Card(
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = accent.copy(alpha = 0.08f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            StatusPill(badge, accent)
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(title, fontWeight = FontWeight.Black, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(subtitle, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
     }
