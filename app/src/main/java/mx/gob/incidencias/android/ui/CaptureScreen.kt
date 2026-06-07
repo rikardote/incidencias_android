@@ -260,7 +260,7 @@ private fun CaptureCodeStep(
                 subtitle = "Toca una categoría y elige el código. Usa búsqueda manual solo si lo necesitas.",
                 pill = "Sin teclado"
             ) {
-                CodeCategoryGrid(
+                CodeCategoryList(
                     categories = uiState.categories,
                     selectedCategory = uiState.selectedCategory,
                     onCategorySelected = {
@@ -331,46 +331,45 @@ private fun CaptureCodeStep(
 }
 
 @Composable
-private fun CodeCategoryGrid(
+private fun CodeCategoryList(
     categories: List<CodeCategoryOption>,
     selectedCategory: String?,
     onCategorySelected: (String) -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        categories.chunked(2).forEach { row ->
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                row.forEach { option ->
-                    val selected = selectedCategory == option.id
-                    Card(
+        categories.forEach { option ->
+            val selected = selectedCategory == option.id
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onCategorySelected(option.id) },
+                elevation = CardDefaults.cardElevation(defaultElevation = if (selected) 2.dp else 0.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = if (selected) Guinda.copy(alpha = 0.13f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.42f)
+                ),
+                shape = RoundedCornerShape(18.dp)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
                         modifier = Modifier
-                            .weight(1f)
-                            .clickable { onCategorySelected(option.id) },
-                        elevation = CardDefaults.cardElevation(defaultElevation = if (selected) 3.dp else 1.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = if (selected) Guinda.copy(alpha = 0.13f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)
-                        ),
-                        shape = RoundedCornerShape(18.dp)
+                            .size(36.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(if (selected) Guinda.copy(alpha = 0.18f) else Verde.copy(alpha = 0.12f)),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(option.label, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Black, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                StatusPill(option.count.toString(), if (selected) Guinda else Verde)
-                            }
-                            Text(
-                                option.description,
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
+                        Text(option.label.take(1), color = if (selected) Guinda else Verde, fontWeight = FontWeight.Black)
                     }
+                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text(option.label, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Black, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(option.description, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    }
+                    StatusPill("${option.count}", if (selected) Guinda else Verde)
+                    Text("Ver", style = MaterialTheme.typography.labelSmall, color = if (selected) Guinda else MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Bold)
                 }
-                if (row.size == 1) Spacer(modifier = Modifier.weight(1f))
             }
         }
     }

@@ -69,9 +69,8 @@ class CodeSearchViewModel(
     }
 
     fun onCategorySelected(categoryId: String) {
-        val selected = if (_uiState.value.selectedCategory == categoryId) null else categoryId
-        _uiState.update { it.copy(selectedCategory = selected, query = "") }
-        applyCategory(selected)
+        _uiState.update { it.copy(selectedCategory = categoryId, query = "") }
+        applyCategory(categoryId)
     }
 
     fun onQueryChange(query: String) {
@@ -106,10 +105,10 @@ class CodeSearchViewModel(
 
     private fun buildCategories(codes: List<IncidenceCode>): List<CodeCategoryOption> {
         val base = listOf(
-            CodeCategoryOption("vacaciones", "Vacaciones", "Periodos y días vacacionales"),
-            CodeCategoryOption("incapacidad", "Incapacidad", "Códigos con información médica"),
-            CodeCategoryOption("rango", "Rango / permisos", "Incidencias con fecha inicio y final"),
-            CodeCategoryOption("comision", "Comisión / TXT", "Comisión oficial, TXT u otorgados"),
+            CodeCategoryOption("vacaciones", "Vacaciones", "Periodos vacacionales"),
+            CodeCategoryOption("incapacidad", "Incapacidad", "Requiere médico"),
+            CodeCategoryOption("rango", "Rango / permiso", "Inicio y fin"),
+            CodeCategoryOption("comision", "Comisión / TXT", "Oficial y TXT"),
             CodeCategoryOption("todos", "Todos", "Catálogo completo")
         )
         return base.map { option -> option.copy(count = codes.count { it.matchesCategory(option.id) }) }
